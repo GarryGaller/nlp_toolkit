@@ -1,0 +1,74 @@
+be/BE, being/BEG, am/BEM, are/BER, is/BEZ, been/BEN, were/BED and was/BEDZ
+CC coordinating conjunction
+CD cardinal digit
+DT determiner
+EX existential there (like: "there is" ... think of it like "there exists")
+FW foreign word
+IN preposition/subordinating conjunction
+JJ adjective 'big'
+JJR adjective, comparative 'bigger'
+JJS adjective, superlative 'biggest'
+LS list marker 1)
+MD modal could, will
+NN noun, singular 'desk'
+NNS noun plural 'desks'
+NNP proper noun, singular 'Harrison'
+NNPS proper noun, plural 'Americans'
+PDT predeterminer 'all the kids'
+POS possessive ending parent's
+PRP personal pronoun I, he, she
+PRP$ possessive pronoun my, his, hers
+RB adverb very, silently,
+RBR adverb, comparative better
+RBS adverb, superlative best
+RP particle give up
+TO to go 'to' the store.
+UH interjection errrrrrrrm
+VB verb, base form take
+VBD verb, past tense took
+VBG verb, gerund/present participle taking
+VBN verb, past participle taken
+VBP verb, sing. present, non-3d take
+VBZ verb, 3rd person sing. present takes
+WDT wh-determiner which
+WP wh-pronoun who, what
+WP$ possessive wh-pronoun whose
+WRB wh-abverb where, when
+
+
+CC / сочинительный союз/
+CD / кардинальное число/
+DT / Определительные слова/  артикли, притяжательные прилагательные, указательные местоимения, числительные
+EX / обороты существования типа 'there is', 'there are'|
+FW | иностранные слова |
+IN / предлог или подчинительный союз/
+JJ / прилагательное/
+JJR / прилагательное, сравнительное |
+JJS | прилагательное, превосходная степень |
+LS / маркер элемента списка/
+MD / Modal/
+NN / существительное, единственное или масса/
+NNS / существительное, множественное число/
+NNP / существительное собственное, единственное число/
+NNPS / существительное собственное, множественное число/
+PDT | Predeterminer |
+POS / притяжательное окончание - 's/
+PRP / личное местоимение/
+PRP$ / притяжательное местоимение/
+RB / наречие |
+RBR / наречие, сравнительное/
+RBS / наречие, превосходная степень/
+RP / Particle/
+SYM / Symbol/
+TO/to |
+UH | междометие |
+VB / глагол, базовая форма/
+VBD / глагол, прошедшее время/
+VBG / глагол, герундий или настоящее причастие/
+VBN / глагол, прошедшее причастие/
+VBP / глагол, не 3-е лицо единственного числа присутствует |
+VBZ / глагол, 3-е лицо единственного числа настоящее время/
+WDT / Wh-определитель/
+WP / Wh-местоимение/
+WP$ / притяжательное WH-местоимение/
+WRB / Wh-наречие/

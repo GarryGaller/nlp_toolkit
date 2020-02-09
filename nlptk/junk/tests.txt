@@ -1,0 +1,304 @@
+Sentence(
+    lineno=12533,
+    line='In your rocking chair, by your window dreaming, shall you long, alone.',
+    tokens=[
+        Token(token='rocking',pos='v',lemma='rock',lineno=12533), 
+        Token(token='chair',pos='n',lemma='chair',lineno=12533), 
+        Token(token='window',pos='n',lemma='window',lineno=12533), 
+        Token(token='dreaming',pos='v',lemma='dream',lineno=12533), 
+        Token(token='shall',pos='n',lemma='shall',lineno=12533), 
+        Token(token='long',pos='r',lemma='long',lineno=12533), 
+        Token(token='alone',pos='r',lemma='alone',lineno=12533)
+    ]
+)
+
+
+
+Sentence(
+    lineno=12534,
+    line='In your rocking chair, by your window, shall you dream such happiness as you may never feel.',
+    tokens=[
+        Token(token='in',pos='n',lemma='in',lineno=12534), 
+        Token(token='your',pos='n',lemma='your',lineno=12534), 
+        Token(token='rocking',pos='v',lemma='rock',lineno=12534), 
+        Token(token='chair',pos='n',lemma='chair',lineno=12534), 
+        Token(token='by',pos='n',lemma='by',lineno=12534), 
+        Token(token='your',pos='n',lemma='your',lineno=12534), 
+        Token(token='window',pos='n',lemma='window',lineno=12534), 
+        Token(token='shall',pos='n',lemma='shall',lineno=12534), 
+        Token(token='you',pos='n',lemma='you',lineno=12534), 
+        Token(token='dream',pos='n',lemma='dream',lineno=12534), 
+        Token(token='such',pos='a',lemma='such',lineno=12534), 
+        Token(token='happiness',pos='n',lemma='happiness',lineno=12534), 
+        Token(token='as',pos='n',lemma='a',lineno=12534), 
+        Token(token='you',pos='n',lemma='you',lineno=12534), 
+        Token(token='may',pos='n',lemma='may',lineno=12534), 
+        Token(token='never',pos='r',lemma='never',lineno=12534), 
+        Token(token='feel',pos='n',lemma='feel',lineno=12534)
+    ]
+)
+
+
+Sentence(
+    lineno=12534,
+    line='In your rocking chair, by your window, shall you dream such happiness as you may never feel.',
+    tokens=[
+        Token(token='your',pos='PRP$',lemma='your',lineno=12534), 
+        Token(token='rocking',pos='NN',lemma='rock',lineno=12534), 
+        Token(token='chair',pos='NN',lemma='chair',lineno=12534), 
+        Token(token='your',pos='PRP$',lemma='your',lineno=12534), 
+        Token(token='window',pos='NN',lemma='window',lineno=12534), 
+        Token(token='shall',pos='MD',lemma='shall',lineno=12534), 
+        Token(token='you',pos='PRP',lemma='you',lineno=12534), 
+        Token(token='dream',pos='NN',lemma='dream',lineno=12534), 
+        Token(token='such',pos='JJ',lemma='such',lineno=12534), 
+        Token(token='happiness',pos='NNS',lemma='happines',lineno=12534), 
+        Token(token='you',pos='PRP',lemma='you',lineno=12534), 
+        Token(token='may',pos='MD',lemma='may',lineno=12534), 
+        Token(token='never',pos='RB',lemma='never',lineno=12534), 
+        Token(token='feel',pos='NN',lemma='feel',lineno=12534)
+    ]
+)
+
+
+
+
+Sentence(
+    lineno=12525,
+    line='Ames had pointed out a farther step, but on and on beyond that, if accomplished, would lie others for her.',
+    tokens=[
+        Token(token='ames',pos='n',lemma='ames',lineno=12525), 
+        Token(token='had',pos='v',lemma='have',lineno=12525), 
+        Token(token='pointed',pos='v',lemma='point',lineno=12525), 
+        Token(token='out',pos='n',lemma='out',lineno=12525), 
+        Token(token='a',pos='n',lemma='a',lineno=12525), 
+        Token(token='farther',pos='n',lemma='farther',lineno=12525), 
+        Token(token='step',pos='n',lemma='step',lineno=12525), 
+        Token(token='but',pos='n',lemma='but',lineno=12525), 
+        Token(token='on',pos='n',lemma='on',lineno=12525), 
+        Token(token='and',pos='n',lemma='and',lineno=12525), 
+        Token(token='on',pos='n',lemma='on',lineno=12525), 
+        Token(token='beyond',pos='n',lemma='beyond',lineno=12525), 
+        Token(token='that',pos='n',lemma='that',lineno=12525), 
+        Token(token='if',pos='n',lemma='if',lineno=12525), 
+        Token(token='accomplished',pos='v',lemma='accomplish',lineno=12525), 
+        Token(token='would',pos='n',lemma='would',lineno=12525), 
+        Token(token='lie',pos='n',lemma='lie',lineno=12525), 
+        Token(token='others',pos='n',lemma='others',lineno=12525), 
+        Token(token='for',pos='n',lemma='for',lineno=12525), 
+        Token(token='her',pos='n',lemma='her',lineno=12525)
+    ]
+)
+
+
+Sentence(
+    lineno=10,
+    line='"Why, my dear, you must know, Mrs. Long says that Netherfield is taken
+     by a young man of large fortune from the north of England; 
+     that he came down on Monday in a chaise and four to see the place, 
+     and was so much delighted with it, that he agreed with Mr. Morris immediately; 
+     that he is to take possession before Michaelmas, and some of his servants are
+      to be in the house by the end of next week."',
+    
+    tokens=[
+        Token(token='why',pos='WRB',lemma='why',lineno=10), 
+        Token(token='my',pos='PRP$',lemma='my',lineno=10), 
+        Token(token='dear',pos='JJ',lemma='dear',lineno=10), 
+        Token(token='you',pos='PRP',lemma='you',lineno=10), 
+        Token(token='must',pos='MD',lemma='must',lineno=10), 
+        Token(token='know',pos='VBP',lemma='know',lineno=10), 
+        Token(token='mrs',pos='NN',lemma='mr',lineno=10), 
+        Token(token='long',pos='RB',lemma='long',lineno=10), 
+        Token(token='says',pos='VB',lemma='say',lineno=10), 
+        Token(token='that',pos='WDT',lemma='that',lineno=10), 
+        Token(token='netherfield',pos='JJ',lemma='netherfield',lineno=10), 
+        Token(token='is',pos='VB',lemma='be',lineno=10), 
+        Token(token='taken',pos='VB',lemma='take',lineno=10), 
+        Token(token='by',pos='IN',lemma='by',lineno=10), 
+        Token(token='a',pos='DT',lemma='a',lineno=10), 
+        Token(token='young',pos='JJ',lemma='young',lineno=10), 
+        Token(token='man',pos='NN',lemma='man',lineno=10), 
+        Token(token='of',pos='IN',lemma='of',lineno=10), 
+        Token(token='large',pos='JJ',lemma='large',lineno=10), 
+        Token(token='fortune',pos='NN',lemma='fortune',lineno=10), 
+        Token(token='from',pos='IN',lemma='from',lineno=10), 
+        Token(token='the',pos='DT',lemma='the',lineno=10), 
+        Token(token='north',pos='RB',lemma='north',lineno=10), 
+        Token(token='of',pos='IN',lemma='of',lineno=10), 
+        Token(token='england',pos='NNP-LOC',lemma='england',lineno=10), 
+        Token(token='that',pos='WDT',lemma='that',lineno=10),
+        Token(token='he',pos='PRP',lemma='he',lineno=10), 
+        Token(token='came',pos='VB',lemma='come',lineno=10), 
+        Token(token='down',pos='IN',lemma='down',lineno=10), 
+        Token(token='on',pos='IN',lemma='on',lineno=10), 
+        Token(token='monday',pos='NN',lemma='monday',lineno=10), 
+        Token(token='in',pos='IN',lemma='in',lineno=10), 
+        Token(token='a',pos='DT',lemma='a',lineno=10), 
+        Token(token='chaise',pos='NN',lemma='chaise',lineno=10), 
+        Token(token='and',pos='CC',lemma='and',lineno=10), 
+        Token(token='four',pos='CD',lemma='four',lineno=10), 
+        Token(token='to',pos='TO',lemma='to',lineno=10), 
+        Token(token='see',pos='VB',lemma='see',lineno=10), 
+        Token(token='the',pos='DT',lemma='the',lineno=10), 
+        Token(token='place',pos='NN',lemma='place',lineno=10), 
+        Token(token='and',pos='CC',lemma='and',lineno=10), 
+        Token(token='was',pos='VB',lemma='be',lineno=10), 
+        Token(token='so',pos='RB',lemma='so',lineno=10), 
+        Token(token='much',pos='JJ',lemma='much',lineno=10), 
+        Token(token='delighted',pos='NN',lemma='delight',lineno=10), 
+        Token(token='with',pos='IN',lemma='with',lineno=10), 
+        Token(token='it',pos='PRP',lemma='it',lineno=10), 
+        Token(token='that',pos='WDT',lemma='that',lineno=10), 
+        Token(token='he',pos='PRP',lemma='he',lineno=10), 
+        Token(token='agreed',pos='VBP',lemma='agree',lineno=10), 
+        Token(token='with',pos='IN',lemma='with',lineno=10), 
+        Token(token='mr',pos='NN',lemma='mr',lineno=10), 
+        Token(token='morris',pos='NN',lemma='morri',lineno=10), 
+        Token(token='immediately',pos='RB',lemma='immediately',lineno=10), 
+        Token(token='that',pos='WDT',lemma='that',lineno=10), 
+        Token(token='he',pos='PRP',lemma='he',lineno=10),
+        Token(token='is',pos='VB',lemma='be',lineno=10), 
+        Token(token='to',pos='TO',lemma='to',lineno=10), 
+        Token(token='take',pos='VB',lemma='take',lineno=10), 
+        Token(token='possession',pos='NN',lemma='possession',lineno=10), 
+        Token(token='before',pos='IN',lemma='before',lineno=10), 
+        Token(token='michaelmas',pos='NN',lemma='michaelma',lineno=10), 
+        Token(token='and',pos='CC',lemma='and',lineno=10), 
+        Token(token='some',pos='DT',lemma='some',lineno=10), 
+        Token(token='of',pos='IN',lemma='of',lineno=10), 
+        Token(token='his',pos='UH',lemma='hi',lineno=10), 
+        Token(token='servants',pos='NN',lemma='servant',lineno=10),
+        Token(token='are',pos='VB',lemma='be',lineno=10), 
+        Token(token='to',pos='TO',lemma='to',lineno=10), 
+        Token(token='be',pos='VB',lemma='be',lineno=10), 
+        Token(token='in',pos='IN',lemma='in',lineno=10), 
+        Token(token='the',pos='DT',lemma='the',lineno=10), 
+        Token(token='house',pos='NN',lemma='house',lineno=10), 
+        Token(token='by',pos='IN',lemma='by',lineno=10), 
+        Token(token='the',pos='DT',lemma='the',lineno=10), 
+        Token(token='end',pos='NN',lemma='end',lineno=10), 
+        Token(token='of',pos='IN',lemma='of',lineno=10), 
+        Token(token='next',pos='RB',lemma='next',lineno=10), 
+        Token(token='week',pos='NN',lemma='week',lineno=10)
+    ]
+)
+
+
+
+
+
+Austin Pride and Prejudice.txt 94661 4662 97.7285897731781
+bronte_jane_txt.txt 142373 9375 142.28313827514648
+bronte_wuthering_txt.txt 89443 6964 91.78124952316284
+doyle_the_adventures.txt 79645 6061 79.7385606765747
+dreiser_sister.txt 123185 7078 129.1573874950409
+fitzgerald_great_gatsby_txt.txt 38103 5035 37.06111979484558
+kipling_jungle_book_txt.txt 41654 3421 39.94728493690491
+london_white_txt.txt 59686 4978 58.55734920501709
+stevenson_treasure_island_txt.txt 53418 4556 51.97997307777405
+Stivenson_Fall-or-Dodge-in-Hell_RuLit_Me.txt 255810 14091 269.8284332752228
+stoker_dracula_txt.txt 121691 7718 123.54006624221802
+twain_tom_sawyer_txt.txt 57234 5497 57.543291091918945
+walter_scott_ivanhoe_txt.txt 154189 9778 152.3537142276764
+wells_invisible_man_txt.txt 38718 4590 38.31419134140015
+wells_war_of_the_worlds_txt.txt 47996 5310 46.53266143798828
+wilde_picture_of_dorian_gray_txt.txt 61729 5346 62.23355960845947
+0.014298090535663003
+
+
+Austin Pride and Prejudice.txt 94661 4463 5974 39.024232149124146
+bronte_jane_txt.txt 142373 8916 6839 61.368510007858276
+bronte_wuthering_txt.txt 89443 6620 6816 41.53137564659119
+doyle_the_adventures.txt 79645 5824 6837 35.21001386642456
+dreiser_sister.txt 123185 6776 12536 60.800477504730225
+fitzgerald_great_gatsby_txt.txt 38103 4887 2454 17.080976963043213
+kipling_jungle_book_txt.txt 41654 3257 3205 16.79896092414856
+london_white_txt.txt 59686 4758 4799 24.48840045928955
+stevenson_treasure_island_txt.txt 53418 4366 3730 22.1932692527771
+Stivenson_Fall-or-Dodge-in-Hell_RuLit_Me.txt 255810 13536 15154 131.46551942825317
+stoker_dracula_txt.txt 121691 7384 9711 66.66081261634827
+twain_tom_sawyer_txt.txt 57234 5272 4880 28.447627067565918
+walter_scott_ivanhoe_txt.txt 154189 9291 6743 66.52180480957031
+wells_invisible_man_txt.txt 38718 4391 3845 17.856021404266357
+wells_war_of_the_worlds_txt.txt 47996 5135 3326 19.910138845443726
+wilde_picture_of_dorian_gray_txt.txt 61729 5110 6514 29.48668670654297
+0.006395546016495817
+
+
+
+Austin Pride and Prejudice.txt 122120 4500 5974 47.27470397949219
+bronte_jane_txt.txt 188660 8993 6839 78.11446785926819
+bronte_wuthering_txt.txt 118583 6688 6816 50.91191220283508
+doyle_the_adventures.txt 105521 5887 6837 43.60449409484863
+dreiser_sister.txt 156455 6842 12536 69.90799856185913
+fitzgerald_great_gatsby_txt.txt 52594 4953 2454 20.550175428390503
+kipling_jungle_book_txt.txt 51972 3303 3205 18.95008373260498
+london_white_txt.txt 73210 4805 4799 27.079548835754395
+stevenson_treasure_island_txt.txt 69558 4424 3730 26.234500408172607
+Stivenson_Fall-or-Dodge-in-Hell_RuLit_Me.txt 331082 13640 15154 146.35237097740173
+stoker_dracula_txt.txt 162165 7461 9711 98.01560592651367
+twain_tom_sawyer_txt.txt 72680 5339 4880 30.89376711845398
+walter_scott_ivanhoe_txt.txt 194913 9362 6743 72.24013185501099
+wells_invisible_man_txt.txt 49582 4460 3845 21.07420516014099
+wells_war_of_the_worlds_txt.txt 60688 5173 3326 22.58329176902771
+wilde_picture_of_dorian_gray_txt.txt 80165 5159 6514 36.18406963348389
+0.007467828532592817
+
+
+
+Edgar Allan Poe The Cask of Amontillado.txt ascii 983 622 228 0.05300283432006836
+--------------------
+Edgar Allan Poe The Masque of the Red Death.txt ascii 1061 663 101 0.09200525283813477
+--------------------
+Edgar Allan Poe The Tell-Tale Heart.txt ascii 894 475 166 0.0760042667388916
+--------------------
+Franz Kafka - Metamorphosis.txt ascii 9201 1991 797 0.14000821113586426
+--------------------
+John Steinbeck - Of Mice and Men.txt ascii 14091 2240 3418 0.29901695251464844
+--------------------
+wilde_picture_of_dorian_gray_txt.txt MacCyrillic 34283 5205 6515 395.57762598991394
+--------------------
+
+
+Austin Pride and Prejudice.txt Windows-1252 43519 4424 5974 77.15541315078735
+--------------------
+bronte_jane_txt.txt Windows-1252 74026 9007 6839 128.63935780525208
+--------------------
+bronte_wuthering_txt.txt MacCyrillic 46918 6551 6816 85.46188807487488
+--------------------
+doyle_the_adventures.txt ISO-8859-1 38881 5714 6837 72.07012224197388
+--------------------
+dreiser_sister.txt ISO-8859-1 62374 6858 12536 119.82485342025757
+--------------------
+Edgar Allan Poe The Cask of Amontillado.txt ascii 926 601 228 2.6781532764434814
+--------------------
+Edgar Allan Poe The Masque of the Red Death.txt ascii 1003 638 101 1.9181098937988281
+--------------------
+Edgar Allan Poe The Tell-Tale Heart.txt ascii 858 459 166 1.7280988693237305
+--------------------
+fitzgerald_great_gatsby_txt.txt UTF-8-SIG 20556 4390 2455 33.40791082382202
+--------------------
+Franz Kafka - Metamorphosis.txt ascii 8656 1942 797 13.60977840423584
+--------------------
+John Steinbeck - Of Mice and Men.txt ascii 12635 2143 3418 22.22127103805542
+--------------------
+kipling_jungle_book_txt.txt MacCyrillic 21522 3257 3205 38.601207971572876
+--------------------
+london_white_txt.txt MacCyrillic 30526 4844 4799 54.24410271644592
+--------------------
+stevenson_treasure_island_txt.txt MacCyrillic 27298 4301 3730 48.22375822067261
+--------------------
+Stivenson_Fall-or-Dodge-in-Hell_RuLit_Me.txt utf-8 133002 12973 15160 247.15913677215576
+--------------------
+stoker_dracula_txt.txt MacCyrillic 58980 6897 9711 108.43320226669312
+--------------------
+twain_tom_sawyer_txt.txt MacCyrillic 29720 5275 4880 53.35405158996582
+--------------------
+walter_scott_ivanhoe_txt.txt MacCyrillic 81954 9402 6745 146.10135650634766
+--------------------
+wells_invisible_man_txt.txt MacCyrillic 21198 4314 3845 38.29219031333923
+--------------------
+wells_war_of_the_worlds_txt.txt MacCyrillic 26025 5049 3326 44.800562381744385
+--------------------
+wilde_picture_of_dorian_gray_txt.txt MacCyrillic 31146 4950 6515 57.03426218032837
+--------------------
