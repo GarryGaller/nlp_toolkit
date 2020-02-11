@@ -7,6 +7,7 @@ import time
 import nltk
 from nltk import FreqDist, ConditionalFreqDist
 
+from textwrap import shorten
 from typing import List
 from collections import Counter,defaultdict
 from pprint import pprint,pformat
@@ -14,13 +15,10 @@ from functools import partial
 from itertools import chain
 from collections import OrderedDict
 from itertools import islice
-
-from docx import Document
-
-
+#from docx import Document
+import nlptk
 from nlptk.mining.utils import chardetector, datapath
 from nlptk.mining.vocab import Vocabulary
-from nlptk.measures.metrics import MeasuresAssociation
 from nlptk.misc.mixins import (
                 StripperMixin,
                 RemoverMixin,
@@ -33,9 +31,6 @@ from nlptk.misc.mixins import (
 if sys.version_info < (3,6):
     import win_unicode_console
     win_unicode_console.enable()
-
-
-
 
 
 class Lexicon():
@@ -52,583 +47,6 @@ class Lexicon():
         c_dawg = dawg.CompletionDAWG()
         return c_dawg.load(r'{}.dawg'.format(self.name)) 
 
-
-class Collocate():
-    
-    method = {
-            'mi':MeasuresAssociation.mi,
-            'student':MeasuresAssociation.t_score,
-            't-score':MeasuresAssociation.t_score,
-            'z_score':MeasuresAssociation.z_score,
-            'dice':MeasuresAssociation.dice,
-            'logdice':MeasuresAssociation.log_dice,
-            'log_dice':MeasuresAssociation.log_dice,
-            'mi3':MeasuresAssociation.mi3,
-            'salience':MeasuresAssociation.salience,
-            'min_sens':MeasuresAssociation.min_sens
-            #'likelihood':MeasuresAssociation.likelihood
-    }
-    
-    def __init__(self):
-        pass
-    
-    def collocations(self,tokens,bigrams,measure='student'):
-        # словарь методов реализующих меры ассоциаций
-        
-        
-        self.dict_bigrams = Counter(bigrams)           # частотный словарь биграмм
-        dict_freq = self.freq(tokens)                  # частотный словарь (Counter) всех слов в выборке
-        total = len(tokens)                            # общее число всех слов в выборке
-        collocat_dict = dict()                         # словарь биграмм\коллокаций, где каждому ключу присваивается значение меры ассоциации в зависимости от метода
-        bigrams = set(bigrams)                         # уникализируем список биграмм
-        
-        for bigram in bigrams:
-            n_req  = dict_freq.get(bigram[0],0)        # частота ключевого слово с биграмме
-            c_freq = dict_freq.get(bigram[1],0)        # частота коллоката в биграмме
-            cn_freq = self.dict_bigrams.get(bigram)    # частота самой биграммы
-            collocat_dict[bigram] = type(self).method[measure](cn_freq,n_req,c_freq,total)
-        
-        return Counter(collocat_dict)
-
-
-
-        
-
-class Path():
-    '''
-    >>> paths = Path(source,"*.txt")
-    >>> for path in paths:
-            lines = Stream(path)
-                for line in lines:
-                    print(line)
-    '''
-    
-    def __init__(self, source, pattern):
-        self.source = source
-        self.pattern = pattern     
-  
-    def __paths__(self):
-        source = os.path.join(self.source, self.pattern)
-        
-        files = glob.glob(source)
-        
-        for filename in files:
-            yield os.path.join(source, filename)
-    
-    def __iter__(self):
-        return  self.__paths__()            
-    
-    def __next__(self):
-        return next(self.__paths__())
-
-class Stream():
-    '''
-    >>> lines = Stream(path)
-    >>> for line in lines():
-            print(line)
-    '''        
-    
-    def __init__(self, path=None, encoding=None):
-        
-        self._encoding = encoding
-        self._input = path
-        
-        if not isinstance(self._input,io.TextIOBase):
-            self._encoding = (
-                self._encoding(self._input)  
-                if callable(self._encoding) 
-                else self._encoding
-            )  
-            self._path = self._input
-            self._input = open(self._input,'r',encoding=self._encoding)
-        else:
-            self._path = self._input.name
-                
-    
-    def _liner(self,sentencizer,clean):
-        
-        with self._input as fd:
-            if sentencizer:
-                try:
-                    text = fd.read()
-                except UnicodeDecodeError as err:
-                    print(fd.encoding)
-                    raise 
-                if clean:
-                    text = clean(text)
-                return sentencizer(text)
-            else:
-                return fd
-    
-    def __call__(self,sentencizer=None,clean=None):
-        """Read lines from filepath."""
-        
-        for line  in self._liner(sentencizer,clean):
-            yield line
-        
-
-
-class Corpus():
-    ''''''
-    
-    def __init__(self, 
-            inputs,
-            prep, clean, filters=None, 
-            save=True, verbose=False
-        ):
-        self._inputs = inputs
-        #self._texts = [] 
-        self._prep = prep
-        self._clean = clean
-        self._filters = filters
-        self._vocab = Vocabulary()
-        self._save = save
-        self._id2words = []
-        self.verbose = verbose
-        
-    def __texts__(self):
-        
-        for path in self._inputs:
-            
-            dtxt = datapath(path, ext=".txt").full
-            ddawg = datapath(path, ext=".dawg").full
-            if (
-                not os.path.exists(dtxt)
-                ):
-                prep, clean,filters = self._prep, self._clean, self._filters 
-                if self.verbose:
-                    print('Creating: ',dtxt)
-            else:
-                prep, clean, filters = None,None, self._filters 
-                if self.verbose:
-                    print('Reading:  ',dtxt)
-                
-            if self.verbose:
-                start = time.time()
-            
-            text = Text(path, prep, clean, filters, inplace=True)
-            
-            if self.verbose:
-                print('elapsed:  ',time.time() - start)
-            
-            if self._save and not os.path.exists(dtxt): 
-               text.save(format="txt")
-               print('save:     ', time.time() - start)
-            #self._texts.append(text)
-            self._vocab += Vocabulary(text.words())
-            
-            if self.verbose:
-                print('add vocab:',time.time() - start)
-            
-            yield text
-    
-    @property
-    def idf(self, term=None):
-        if term:
-            return self._vocab._idf.get(term)
-        return self._vocab.idf
-    
-    @property
-    def tfidf(self, texts:List[List[str]]=[], n_doc=None,term=None):
-        if not self._vocab.tfidf:
-            self._vocab.compute_tfidf(
-                [text for text in texts]
-            )
-        
-        if n_doc:
-            if term:
-                return self._vocab._tfidf[n_doc].get(term)
-            return self._vocab._tfidf[n_doc]    
-        return self._vocab.tfidf
-    
-    @property
-    def cfs(self, n_doc=None, term=None):
-        if n_doc:
-            if term:
-                return self._vocab._cfs[n_doc].get(term)
-            return self._vocab._cfs[n_doc]
-        return self._vocab.cfs   
-    
-    '''
-    @property
-    def text_vocab(self, n_doc, term=None):
-        if term:
-            return self._texts[n_doc]._vocab.get(term)
-        return self._texts[n_doc]._vocab
-    '''
-    
-    @property
-    def ccfs(self, term=None):
-        if term:
-            return self._vocab._ccfs.get(term)
-        return self._vocab.ccfs 
-    
-    @property
-    def dfs(self, term=None):
-        if term:
-            return self._vocab._dfs.get(term)
-        return self._vocab.dfs   
-    
-
-    def __iter__(self):
-        return self.__texts__()
-    
-    def __next__(self):
-        return next(self.__texts__())
-    
-    def __str__(self):
-        pass
-    
-    def __repr__(self):
-        fmt = "Corpus(nwords={}, nlemmas={})".format()
-
-
-class Text():
-    '''
-    >>> source = os.path.abspath(r"..\CORPUS\en")
-    >>> sents = Text(Stream(Path(source,"*.txt")))
-    >>> for sent in sents:
-            print(sent)
-    '''    
-    
-    def __init__(self, path, 
-                    prep=None, 
-                    clean=None, 
-                    filters=None,
-                    inplace=False, 
-                    datadir="data",
-                    encoding=chardetector,
-                    verbose=True
-        ):
-        self._path = path
-        self._encoding = encoding
-        self._datadir = datadir
-        self._sents = []  # all sentences from the text
-        #self._words = [] # all words from the text
-        self._prep = prep
-        self._clean = clean
-        self._filters = filters
-        self._vocab = FreqDist() # Counter()  # all unique normalized words from the text
-        self.filename = os.path.basename(os.path.splitext(self._path)[0])
-        self.verbose = verbose
-        
-        if inplace:
-            list(self.__sents__())  
-            
- 
-    def __sents__(self):
-        if self._prep:
-            stream = Stream(self._path,encoding=self._encoding)
-            for num,sent in enumerate(
-                    stream(self._prep.sentencizer, self._clean)
-                ):
-                
-                tagged_sent = TaggedSentence(sent,num,self._prep,self._filters)    
-                lemmas = tagged_sent.lemmas()
-                # в этот словарь попадают все леммы, так как здесь ничего не фильтруется
-                self._vocab += FreqDist(lemmas) 
-                self._sents.append(tagged_sent)
-                #self._words.extend(tagged_sent.words())
-                
-                yield tagged_sent
-        else:
-            path = datapath(self._path,self._datadir,".txt").full
-            if not os.path.exists(path):
-                raise FileNotFoundError(path)
-            
-            yield from self.load()
-    
-    @property
-    def vocab(self):
-        return self._vocab
-    
-    @property
-    def sents(self):
-        return self._sents
-    
-    @property
-    def nsents(self):
-        return len(self._sents) 
-    
-    @property
-    def nwords(self):
-        return len(self.words(filtrate=False))
-    
-    @property
-    def nlemmas(self):
-        return len(self._vocab)
-    
-    
-    def words(self, filtrate=True, lower=True):
-        result = []
-        for sent in self._sents:
-            tokens = sent.tokens(filtrate=filtrate,lower=lower)
-            words = [token.token for token in tokens]
-            result.extend(words)
-        return result
-    
-    def lemmas(self, filtrate=True, lowre=True):
-        result = []
-        for sent in self._sents:
-            tokens = sent.tokens(filtrate=filtrate,lower=lower)
-            words = [token.lemma for token in tokens]
-            result.extend(words)
-        return result
-
-     
-    def postags(self, pos=None, universal_tagset=False, ret_cond=True):
-        
-        def merge(tags):
-            result = FreqDist()
-            for tag in tags:
-                result += cfd[tag]
-            return result 
-        
-        maps = {
-            'NOUN':{'NN','NNS','NNP','NNPS'},
-            'VERB':{'VB','VBD','VBG','VBN','VBP','VBZ'},
-            'ADJ': {'JJ','JJR','JJS'},
-            'ADV': {'RB','RBR' 'RBS'}, 
-        } 
-        
-        cfd = ConditionalFreqDist()
-        
-        for sent in self._sents:
-            tokens = sent.untagged() 
-            for tok,tag,lemma in tokens:
-                cfd[tag][lemma.lower()] += 1
-        cond = cfd.conditions()
-        
-        result = cfd
-        
-        if pos:
-            if not universal_tagset and pos in maps:
-                result = merge(maps[pos])
-            else:
-                result = cfd[pos]
-        if ret_cond:    
-            result = result, cond   
-        
-        return result
-        
-    def postags2(self, pos=None):
-        words = []
-        for sent in self._sents:
-            words.extend(sent.untagged())    
-        words.sort()
-        tags = defaultdict(list)
-        for key, group in groupby(words, lambda make: make[1]):
-            tags[key].extend([l for t,p,l in group])
-        
-        if pos:
-           return tags.get(pos)
-        return tags
- 
-    def doc2bow(self):
-        pass
-    
-    def ngrams(self, n,**kwargs):
-        yield from nltk.ngrams(self.lemmas(), n, **kwargs)
-    
-    def skipgrams(self ,n, k,**kwargs):
-        yield from nltk.skipgrams(self.lemmas(), n, k,**kwargs)
-    
-    def collocations(self):
-        pass
-    
-    def hapaxes(self,n=-1):
-        return self._vocab.hapaxes()[:n]
-  
-    
-    def save(self, path=None, format=("txt","dawg")):
-        path = path or datapath(self._path).short
-        
-        if not isinstance(format,(tuple,list)):
-            format = (format,)
-        
-        for fmt in format:
-            if fmt == "txt":
-                with open('{}.txt'.format(path),'w', encoding='utf8') as f:
-                    f.writelines('\n'.join(map(str,self._sents)))
-            elif fmt == 'dawg':
-               data = [(str(sent), idx) 
-                    for idx, sent in enumerate(self._sents)
-               ]
-               self.dawg = dawg.IntCompletionDAWG(data)   
-               self.dawg.save('{}.dawg'.format(path))
-    
-    
-    def load(self, path=None, format=("txt","dawg")):
-        
-        path = path or datapath(self._path).short
-        if not isinstance(format,(tuple,list)):
-            format = (format,)
-        
-        for fmt in format:
-            if fmt == "txt":
-                fullpath = '{}.txt'.format(path)
-                with open(fullpath,'r', encoding='utf8') as fd:
-                    
-                    for n,line in enumerate(fd):
-                        tagged_sent = TaggedSentence(
-                                            line.strip(),n,
-                                            filters=self._filters
-                                )
-                        lemmas = tagged_sent.lemmas()
-                        self._vocab += Counter(lemmas)
-                        self._sents.append(tagged_sent)
-                        yield tagged_sent
-            
-            if fmt =='dawg':
-                if not os.path.exists('{}.dawg'.format(path)):
-                    return
-                
-                self.dawg = dawg.IntCompletionDAWG()   
-                self.dawg.load('{}.dawg'.format(path))   
-               
-                if not self._sents:
-                    sents = sorted(self.dawg.items(),key=lambda t:t[1])
-                    tagged_sent = TaggedSentence(
-                                        line.strip(),n,
-                                        filters=self._filters
-                                    )
-                    lemmas = tagged_sent.lemmas()
-                    self._vocab += Counter(lemmas)
-                    self._sents.append(tagged_sent)
-                    yield tagged_sent
-
-    
-    def __iter__(self):
-        return self.__sents__()
-    
-    def __next__(self):
-        return next(self.__sents__())
-     
-    def __str__(self):
-        pass
-    
-    def __repr__(self):
-        fmt = "Text(name={}, nsents={}, nwords={}, nlemmas={})"
-        return fmt.format(
-            self.filename, self.nsents, self.nwords, self.nlemmas
-        )
-
-
-
-
-class TaggedSentence():
-    # \u2215 - знак деления
-    # \u2044  дробная наклонная черта
-    def __init__(self, sent, num, prep=None, filters=None, delim='\u2044'):
-        self.raw_sent = sent    
-        self._n = num
-        self._delim = delim
-        self._prep = prep
-        self._filters = filters or (lambda s:s)
-        if prep:
-            self._sent = self.tagged(sent)
-        else:
-            self._sent = sent
-    
-    def tagged(self, sent):
-        tokens = [token for token in self._prep.tokenizer(sent) if token]
-        lemmas = list(self._prep.lemmatizer(tokens))
-        
-        threes = []
-        for token,(lemma,pos) in zip(tokens,lemmas):
-           threes.append(self._delim.join([token,pos,lemma]))    
-        tagged_sent = ' '.join(threes)    
-        
-        return tagged_sent
-        
-    def untagged(self, sent=None):
-        threes = []
-        sent = sent or self._sent
-        for  word in sent.split(' '):
-            try:
-                res = word.split(self._delim)
-                if len(res) == 3:
-                    token, pos, lemma = res
-                else:
-                    token, pos, lemma = res, '', ''
-                threes.append((token,pos,lemma)) 
-            except Exception as err:
-                print(repr(sent),self._n,word)
-                raise ValueError(err)
-                        
-        return threes
-    
-    
-    @property
-    def n(self):
-        return self._n
-    
-    def raw(self):
-        sent = self.untagged(self._sent)
-        return ' '.join(chunk[0] for chunk in sent)
-    
-    def words(self):
-        sent = self.untagged(self._sent)
-        return tuple(chunk[0].lower() for chunk in sent)
-        
-    def pos(self):
-        sent = self.untagged(self._sent)
-        return tuple(chunk[1] for chunk in sent)
-    
-    def lemmas(self):
-        sent = self.untagged(self._sent)
-        return tuple(chunk[2].lower() for chunk in sent)
-    
-    def tokens(self, filtrate=True, **kwargs):
-        sent = self.untagged(self._sent)
-        
-        result = [Token(*chunk,self._n,idx,**kwargs) 
-            for idx,chunk in enumerate(sent)
-        ]
-           
-        if filtrate: 
-            result = self._filters(result)
-    
-        return tuple(result)   
-    
-    def __str__(self):
-        return self._sent
-
-    def __repr__(self):
-        fmt = "TaggedSentence('{}', n={})"
-        return fmt.format(self._sent.replace(' ','\n'), self._n)
-
-
-class Token():
-    
-    def __init__(self, token, pos, lemma, nsent=-1, idx=-1,**kwargs):
-        
-        self.token = token
-        self.pos = pos
-        self.lemma = lemma
-        self.nsent = nsent
-        self.idx = idx
-        if not kwargs.get('lower'):
-            self._lower = lambda s:s 
-        else:
-            self._lower = str.lower
-    
-    def __str__(self):
-        return self.lemma
-        
-    def __repr__(self):
-        fmt = (
-            "Token(token='{token}', idx={idx}, "
-            "pos='{pos}', lemma='{lemma}', nsent={nsent})"
-        )
-        return fmt.format(
-            token=self._lower(self.token),
-            idx=self.idx,
-            pos=self.pos,
-            lemma=self._lower(self.lemma),
-            nsent=self.nsent
-        )
-    
 
 class Prep(TokenizerMixin,
             LemmatizerMixin,
@@ -766,9 +184,581 @@ class TokenFilter(RemoverMixin):
 
 
 
+class Path():
+    '''
+    >>> paths = Path(source,"*.txt")
+    >>> for path in paths:
+            lines = Stream(path)
+                for line in lines:
+                    print(line)
+    '''
+    
+    def __init__(self, source, pattern):
+        self.source = source
+        self.pattern = pattern     
+  
+    def __paths__(self):
+        source = os.path.join(self.source, self.pattern)
+        
+        files = glob.glob(source)
+        
+        for filename in files:
+            yield os.path.join(source, filename)
+    
+    def __iter__(self):
+        return  self.__paths__()            
+    
+    def __next__(self):
+        return next(self.__paths__())
 
+
+class Stream():
+    '''
+    >>> lines = Stream(path)
+    >>> for line in lines():
+            print(line)
+    '''        
+    
+    def __init__(self, path=None, encoding=None):
+        
+        self._encoding = encoding
+        self._input = path
+        
+        if not isinstance(self._input,io.TextIOBase):
+            self._encoding = (
+                self._encoding(self._input)  
+                if callable(self._encoding) 
+                else self._encoding
+            )  
+            self._path = self._input
+            self._input = open(self._input,'r',encoding=self._encoding)
+        else:
+            self._path = self._input.name
+                
+    
+    def _liner(self,sentencizer,clean):
+        
+        with self._input as fd:
+            if sentencizer:
+                try:
+                    text = fd.read()
+                except UnicodeDecodeError as err:
+                    print(fd.encoding)
+                    raise 
+                if clean:
+                    text = clean(text)
+                return sentencizer(text)
+            else:
+                return fd
+    
+    def __call__(self,sentencizer=None,clean=None):
+        """Read lines from filepath."""
+        
+        for line  in self._liner(sentencizer,clean):
+            yield line
+        
+
+
+class Corpus():
+    ''''''
+    
+    def __init__(self, 
+            inputs:List[str],
+            prep:Prep, 
+            clean:TextCleaner, 
+            filters:TokenFilter=None, 
+            save=True, verbose=False
+        ):
+        self._inputs = inputs
+        #self._texts = [] 
+        self._prep = prep
+        self._clean = clean
+        self._filters = filters
+        self._vocab = Vocabulary()
+        self._save = save
+        self.verbose = verbose
+        
+    def __texts__(self):
+        
+        for path in self._inputs:
+            
+            dtxt = datapath(path, ext=".txt").full
+            ddawg = datapath(path, ext=".dawg").full
+            if (
+                not os.path.exists(dtxt)
+                ):
+                prep, clean,filters = self._prep, self._clean, self._filters 
+                if self.verbose:
+                    print('creating: ', dtxt.replace(MODULEDIR,'..'))
+            else:
+                prep, clean, filters = None,None, self._filters 
+                if self.verbose:
+                    print('reading:  ', dtxt.replace(MODULEDIR,'..'))
+                
+            if self.verbose:
+                start = time.time()
+            
+            text = Text(path, prep, clean, filters, inplace=True)
+            
+            if self.verbose:
+                print('elapsed:  ',time.time() - start)
+            
+            if self._save and not os.path.exists(dtxt): 
+               text.save(format="txt")
+               print('save:     ', time.time() - start)
+            #self._texts.append(text)
+            words = text.words()
+            self._vocab += Vocabulary(words)
+            
+            if self.verbose:
+                wraptext = shorten(
+                    str(words[:10]), width=80, placeholder="...]"
+                )
+                print('vocab:', wraptext)
+                print('add vocab:',time.time() - start)
+            
+            yield text
+    
+    
+    @property
+    def ndocs(self):
+        return self._vocab.ndocs
+    
+    def hapaxes(self,n_doc=None):
+         return self._vocab.hapaxes(n_doc)
+    
+    
+    def tf(self, n_doc, token=None, sort=False):
+        if token:
+            return self._vocab.tf(n_doc,token)
+        
+        return self._sort(self._vocab.tf(n_doc),sort) 
+    
+    
+    def idf(self, token=None, sort=False):
+        if token:
+            return self._vocab.idf(token)
+        
+        return self._sort(self._vocab.idf(),sort) 
+    
+
+    def tfidf(self, 
+        n_doc, 
+        token=None,
+        texts:List[List[str]]=[], 
+        sort=False
+        ):
+        if texts:
+            self._vocab.compute_tfidf(
+                [text for text in texts]
+                
+            )
+        
+        if token:
+            return self._vocab.tfidf(n_doc,token)
+        return self._sort(self._vocab.tfidf(n_doc),sort) 
+          
+        
+    def cfs(self, n_doc, token=None, sort=False):
+        if token:
+            return self._vocab.cfs(n_doc,token)
+        return self._sort(self._vocab.cfs(n_doc),sort) 
+           
+    
+    def ccfs(self, token=None, sort=False):
+        if token:
+            return self._vocab.ccfs(token)
+        return self._sort(self._vocab.ccfs(),sort) 
+    
+    
+    def dfs(self, token=None, sort=False):
+        if token:
+            return self._vocab.dfs(token)
+        return self._sort(self._vocab.dfs(),sort)  
+        
+    
+    def _sort(self,obj,typ):
+        if typ == 1:
+            res = sorted(obj.items(),key=lambda t:t[1])
+        elif typ == -1:
+            res = sorted(obj.items(),key=lambda t:-t[1])
+        else:
+            res = obj     
+        return res
+    
+    def __iter__(self):
+        return self.__texts__()
+    
+    def __next__(self):
+        return next(self.__texts__())
+    
+    def __str__(self):
+        pass
+    
+    def __repr__(self):
+        fmt = "Corpus(nwords={}, nlemmas={})".format()
+
+
+class Text():
+    '''
+    >>> source = os.path.abspath(r"..\CORPUS\en")
+    >>> sents = Text(Stream(Path(source,"*.txt")))
+    >>> for sent in sents:
+            print(sent)
+    '''    
+    
+    def __init__(self, 
+                    path:str, 
+                    prep:Prep=None, 
+                    clean:TextCleaner=None, 
+                    filters:TokenFilter=None,
+                    inplace=False, 
+                    datadir="data",
+                    encoding=chardetector,
+                    verbose=True
+        ):
+        self._path = path
+        self._encoding = encoding
+        self._datadir = datadir
+        self._sents = []  # all sentences from the text
+        #self._words = [] # all words from the text
+        self._prep = prep
+        self._clean = clean
+        self._filters = filters
+        self._vocab = FreqDist() # Counter()  # all unique normalized words from the text
+        #self.filename = os.path.basename(os.path.splitext(self._path)[0])
+        self.filename = os.path.basename(self._path)
+        self.verbose = verbose
+        
+        if inplace:
+            list(self.__sents__())  
+            
+ 
+    def __sents__(self):
+        if self._prep:
+            stream = Stream(self._path,encoding=self._encoding)
+            for num,sent in enumerate(
+                    stream(self._prep.sentencizer, self._clean)
+                ):
+                
+                tagged_sent = TaggedSentence(sent,num,self._prep,self._filters)    
+                lemmas = tagged_sent.lemmas()
+                # в этот словарь попадают все леммы, так как здесь ничего не фильтруется
+                self._vocab += FreqDist(lemmas) 
+                self._sents.append(tagged_sent)
+                #self._words.extend(tagged_sent.words())
+                
+                yield tagged_sent
+        else:
+            path = datapath(self._path,self._datadir,".txt").full
+            if not os.path.exists(path):
+                raise FileNotFoundError(path)
+            
+            yield from self.load()
+    
+    @property
+    def vocab(self):
+        return self._vocab
+    
+    @property
+    def sents(self):
+        return self._sents
+    
+    @property
+    def nsents(self):
+        return len(self._sents) 
+    
+    @property
+    def nwords(self):
+        return len(self.words(filtrate=False))
+    
+    @property
+    def nlemmas(self):
+        return len(self._vocab)
+    
+    
+    def words(self, filtrate=True, lower=True):
+        result = []
+        for sent in self._sents:
+            tokens = sent.tokens(filtrate=filtrate,lower=lower)
+            words = [token.token for token in tokens]
+            result.extend(words)
+        return result
+    
+    def lemmas(self, filtrate=True, lower=True):
+        result = []
+        for sent in self._sents:
+            tokens = sent.tokens(filtrate=filtrate,lower=lower)
+            words = [token.lemma for token in tokens]
+            result.extend(words)
+        return result
+
+     
+    def postags(self, pos=None, universal_tagset=False, ret_cond=True):
+        
+        def merge(tags):
+            result = FreqDist()
+            for tag in tags:
+                result += cfd[tag]
+            return result 
+        
+        maps = {
+            'NOUN':{'NN','NNS','NNP','NNPS'},
+            'VERB':{'VB','VBD','VBG','VBN','VBP','VBZ'},
+            'ADJ': {'JJ','JJR','JJS'},
+            'ADV': {'RB','RBR' 'RBS'}, 
+        } 
+        
+        cfd = ConditionalFreqDist()
+        
+        for sent in self._sents:
+            tokens = sent.untagging() 
+            for tok,tag,lemma in tokens:
+                cfd[tag][lemma.lower()] += 1
+        cond = cfd.conditions()
+        
+        result = cfd
+        
+        if pos:
+            if not universal_tagset and pos in maps:
+                result = merge(maps[pos])
+            else:
+                result = cfd[pos]
+        if ret_cond:    
+            result = result, cond   
+        
+        return result
+        
+    def postags2(self, pos=None):
+        words = []
+        for sent in self._sents:
+            words.extend(sent.untagging())    
+        words.sort()
+        tags = defaultdict(list)
+        for key, group in groupby(words, lambda make: make[1]):
+            tags[key].extend([l for t,p,l in group])
+        
+        if pos:
+           return tags.get(pos)
+        return tags
+ 
+    def doc2bow(self):
+        pass
+    
+    def ngrams(self, n,**kwargs):
+        yield from nltk.ngrams(self.lemmas(), n, **kwargs)
+    
+    def skipgrams(self ,n, k,**kwargs):
+        yield from nltk.skipgrams(self.lemmas(), n, k,**kwargs)
+    
+    def collocations(self):
+        pass
+    
+    def hapaxes(self,n=-1):
+        return self._vocab.hapaxes()[:n]
+  
+    
+    def save(self, path=None, format=("txt","dawg")):
+        path = path or datapath(self._path).short
+        
+        if not isinstance(format,(tuple,list)):
+            format = (format,)
+        
+        for fmt in format:
+            if fmt == "txt":
+                with open('{}.txt'.format(path),'w', encoding='utf8') as f:
+                    f.writelines('\n'.join(map(str,self._sents)))
+            elif fmt == 'dawg':
+               data = [(str(sent), idx) 
+                    for idx, sent in enumerate(self._sents)
+               ]
+               self.dawg = dawg.IntCompletionDAWG(data)   
+               self.dawg.save('{}.dawg'.format(path))
+    
+    
+    def load(self, path=None, format=("txt","dawg")):
+        
+        path = path or datapath(self._path).short
+        if not isinstance(format,(tuple,list)):
+            format = (format,)
+        
+        for fmt in format:
+            if fmt == "txt":
+                fullpath = '{}.txt'.format(path)
+                with open(fullpath,'r', encoding='utf8') as fd:
+                    
+                    for n,line in enumerate(fd):
+                        tagged_sent = TaggedSentence(
+                                            line.strip(),n,
+                                            filters=self._filters
+                                )
+                        lemmas = tagged_sent.lemmas()
+                        self._vocab += FreqDist(lemmas)
+                        self._sents.append(tagged_sent)
+                        yield tagged_sent
+            
+            if fmt =='dawg':
+                if not os.path.exists('{}.dawg'.format(path)):
+                    return
+                
+                self.dawg = dawg.IntCompletionDAWG()   
+                self.dawg.load('{}.dawg'.format(path))   
+               
+                if not self._sents:
+                    sents = sorted(self.dawg.items(),key=lambda t:t[1])
+                    tagged_sent = TaggedSentence(
+                                        line.strip(),n,
+                                        filters=self._filters
+                                    )
+                    lemmas = tagged_sent.lemmas()
+                    self._vocab += Counter(lemmas)
+                    self._sents.append(tagged_sent)
+                    yield tagged_sent
+
+    
+    def __iter__(self):
+        return self.__sents__()
+    
+    def __next__(self):
+        return next(self.__sents__())
+     
+    def __str__(self):
+        pass
+    
+    def __repr__(self):
+        fmt = "Text(name='{}', nsents={}, nwords={}, nlemmas={})"
+        return fmt.format(
+            self.filename, self.nsents, self.nwords, self.nlemmas
+        )
+
+
+class TaggedSentence():
+    # \u2215 - знак деления
+    # \u2044  дробная наклонная черта
+    def __init__(self, sent, num, prep=None, filters=None, delim='\u2044'):
+        self.raw_sent = sent    
+        self._n = num
+        self._delim = delim
+        self._prep = prep
+        self._filters = filters or (lambda s:s)
+        if prep:
+            self._sent = self.tagging(sent)
+        else:
+            self._sent = sent
+    
+    def tagging(self, sent):
+        
+        tokens = [token for token in self._prep.tokenizer(sent) if token]
+        lemmas = list(self._prep.lemmatizer(tokens))
+        
+        threes = []
+        for token,(lemma,pos) in zip(tokens,lemmas):
+           threes.append(self._delim.join([token,pos,lemma]))    
+        tagged_sent = ' '.join(threes)    
+        
+        return tagged_sent
+        
+    def untagging(self, sent=None):
+        threes = []
+        sent = sent or self._sent
+        for  word in sent.split(' '):
+            try:
+                res = word.split(self._delim)
+                if len(res) == 3:
+                    token, pos, lemma = res
+                else:
+                    token, pos, lemma = res, '', ''
+                threes.append((token,pos,lemma)) 
+            except Exception as err:
+                print(repr(sent),self._n,word)
+                raise ValueError(err)
+                        
+        return threes
+    
+    
+    @property
+    def n(self):
+        return self._n
+    
+    def raw(self):
+        sent = self.untagging(self._sent)
+        return ' '.join(chunk[0] for chunk in sent)
+    
+    def words(self,lower=True):
+        sent = self.untagging(self._sent)
+        lower = str.lower if lower else lambda s: s
+        return tuple(lower(chunk[0]) for chunk in sent)
+        
+    def pos(self):
+        sent = self.untagging(self._sent)
+        return tuple(chunk[1] for chunk in sent)
+    
+    def lemmas(self, lower=True):
+        sent = self.untagging(self._sent)
+        lower = str.lower if lower else lambda s: s
+        return tuple(lower(chunk[2]) for chunk in sent)
+    
+    def tokens(self, filtrate=False, **kwargs):
+        sent = self.untagging(self._sent)
+        
+        result = [Token(*chunk,self._n,idx,**kwargs) 
+            for idx,chunk in enumerate(sent)
+        ]
+           
+        if filtrate: 
+            result = self._filters(result)
+    
+        return tuple(result)   
+    
+    def __str__(self):
+        return self._sent
+
+    def __repr__(self):
+        fmt = "TaggedSentence('{}', n={})"
+        return fmt.format(self._sent.replace(' ','\n'), self._n)
+
+
+class Token():
+    
+    def __init__(self, token, pos, lemma, nsent=-1, idx=-1,**kwargs):
+        
+        if not kwargs.get('lower'):
+            lower = lambda s:s
+        else:
+            lower = str.lower
+        
+        self.token = lower(token)
+        self.pos = pos
+        self.lemma = lower(lemma)
+        self.nsent = nsent
+        self.idx = idx
+        
+        
+    def __str__(self):
+        return self.lemma
+        
+    def __repr__(self):
+        fmt = (
+            "Token(token='{token}', idx={idx}, "
+            "pos='{pos}', lemma='{lemma}', nsent={nsent})"
+        )
+        return fmt.format(
+            token=self.token,
+            idx=self.idx,
+            pos=self.pos,
+            lemma=self.lemma,
+            nsent=self.nsent
+        )
+    
+
+MODULEDIR = os.path.abspath(os.path.dirname(nlptk.__file__))
+#------------------------------------------------------------------------------#
+# tests
+#------------------------------------------------------------------------------#
 if __name__ == "__main__":
-    APPDIR = os.path.abspath(os.path.dirname(__file__))
+    
+    
+    #APPDIR = os.path.abspath(os.path.dirname(__file__))
     text = '''
     "It is farther on," said I; "but observe the white web-work which gleams from these cavern walls."
 
@@ -783,7 +773,7 @@ My poor friend found it impossible to reply for many minutes.
     
     
     APPDIR =  os.path.dirname(__file__)
-    source = os.path.abspath(os.path.join(APPDIR,'..',r'CORPUS\en'))
+    source = os.path.abspath(os.path.join(MODULEDIR,r'corpus\en'))
  
     prep = Prep()
     rules_clean=OrderedDict(
@@ -813,20 +803,23 @@ My poor friend found it impossible to reply for many minutes.
     for text in corpus:    
        
         for i,sent in enumerate(text):
-            #print(sent)
-            pass      
-            
             '''
-            print(sent.tokens())
-            print(sent.words())
-            print(sent.lemmas())
             print(sent.raw())
+            print(sent)
+            print()
+            print(sent.words())
+            print()
+            print(sent.lemmas())
+            print()
+            print(sent.tokens(lower=True))
+            print()
+            print(sent.tokens(filtrate=True))
+            
+            input("next >>")      
             '''
-            '''
-            tokens = filters(sent.tokens())
-            if tokens:
-                pprint(repr(tokens))
-            '''    
+            pass
+           
+            
         '''
         print(repr(text))
         
@@ -860,18 +853,27 @@ My poor friend found it impossible to reply for many minutes.
         '''
       
     
-    '''        
+            
         
     #input("--tfidf--")    
-    #pprint(corpus.tfidf[0])
-    input("--cfc--")
-    pprint(corpus.cfs[0])
-    input("--ccfc--")
-    pprint(corpus.ccfs)
-    input("--dfc--")
-    pprint(corpus.dfs)
+    #pprint(corpus.tfidf(0))
+    print(corpus.cfs(1,'rochester'))
+    print(sum(corpus.cfs(1).values()))
+    print(corpus.dfs('rochester'))
+    print(corpus.tf(1,'rochester'))
+    print(corpus.idf('rochester'))
     
-    '''
+    input("--cfc--")
+    pprint(corpus.cfs(0,sort=-1)[:10])
+    input("--ccfc--")
+    pprint(corpus.ccfs(sort=-1)[:10])
+    input("--dfc--")
+    pprint(corpus.dfs(sort=-1)[:50])
+    input("--tfidf--")
+    
+    for n in range(corpus.ndocs):
+        pprint(corpus.tfidf(n,sort=-1)[:10]) 
+    
     
     '''
     He/PPS/He prided/VBD/prided himself/PPL/himself on/IN/on his/PP$/his connoisseurship/NN/connoisseurship in/IN/in wine/NN/wine
@@ -885,7 +887,7 @@ My poor friend found it impossible to reply for many minutes.
      "Token(token='virtuoso', idx=5, pos='NN', lemma='virtuoso', nsent=9), "
      "Token(token='spirit', idx=6, pos='NN', lemma='spirit', nsent=9)]")
     
-    
+    # все теги частей речи, которые text.postags() возвращает в переменную cond из ConditionalFreqDist().conditions()
     ['NNPS', 'EX', 'WP', 'VBN', 'MD', 'VBP', 'VBD', 'WP$', 'JJS', 'JJR', 'PRP',
     'PRP$', 'NNS', 'VBG', 'TO', 'VB', 'UH', 'FW', 'JJ', 'CC', 'RP', 'POS', 
     'PDT', 'CD', 'WDT', 'WRB', 'NN', 'VBZ', 'RBS', 'IN', 'DT', 'RB', 'RBR', 'NNP'

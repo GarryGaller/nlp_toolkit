@@ -1,16 +1,13 @@
+from functools import partial
+import sys,os
 from pymorphy2 import MorphAnalyzer
 from nltk import WordNetLemmatizer,pos_tag
 from nltk.corpus import wordnet
-
-from pattern.en import lemma as pattern_lemma, tag as pattern_tag
-from treetaggerwrapper import TreeTagger,make_tags
-
-from functools import partial
-import sys,os
+#from pattern.en import lemma as pattern_lemma, tag as pattern_tag
+#from treetaggerwrapper import TreeTagger,make_tags
 
 
-     
-    
+
 class TreeTaggerLemmatizer():
     '''Тэггер Хелмута Шмида из института компьютерной лингвистики университета Штутгарта.
     Доступен только в виде исполняемого файла; имеет свой набор тэгов,
@@ -26,10 +23,14 @@ class TreeTaggerLemmatizer():
         self.__dict__.update(kwargs)
         
         if not os.path.isabs(tagdir):
-            tagdir = os.path.join(sys.exec_prefix,r'lib\site-packages',tagdir)
+            tagdir = os.path.join(sys.exec_prefix,
+                r'lib\site-packages',tagdir
+            )
         
         if not os.path.isabs(tagparfile):
-            tagparfile = os.path.join(tagdir,r'lib\english.par',tagparfile)
+            tagparfile = os.path.join(tagdir,
+                r'lib\english.par',tagparfile
+            )
         
         self.morph = TreeTagger(
             TAGLANG=lang, TAGDIR=tagdir, TAGPARFILE=tagparfile
