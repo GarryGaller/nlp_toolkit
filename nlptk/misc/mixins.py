@@ -129,7 +129,7 @@ class LemmatizerMixin():
 class TokenizerMixin():
     
     @staticmethod
-    def simple_tokenize(text):
+    def simple_tokenize(text, strip=None):
         '''Tokenize input test using gensim.utils.PAT_ALPHABETIC.
         Using regexp (((?![\d])\w)+)
         >>> s = "Good muffins cost $3.88\nin New York.  Please buy me\ntwo of them.\n\nThanks."
@@ -140,11 +140,11 @@ class TokenizerMixin():
         
         for token in gensim.utils.simple_tokenize(text):
             if token and not token.isspace():
-                yield token    
+                yield token.strip(strip)    
     
     
     @staticmethod
-    def simple_tokenize2(text):
+    def simple_tokenize2(text, strip=None):
         '''
         Using regexp '\b\w+?\b'
         >>> s = "Good muffins cost $3.88\nin New York.  Please buy me\ntwo of them.\n\nThanks."
@@ -156,19 +156,19 @@ class TokenizerMixin():
         for match in patterns.RE_WORD.finditer(text):
             token = match.group()
             if token and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
     
     @staticmethod
-    def token_tokenize(text):
+    def token_tokenize(text, strip=None):
         
         for token in patterns.RE_TOKEN.split(text): 
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
     
     @staticmethod
-    def toktok_tokenize(text):
+    def toktok_tokenize(text, strip=None):
         '''
         >>> text = u'Is 9.5 or 525,600 my favorite number?'
         >>> ToktokTokenizer().tokenize(text)
@@ -183,11 +183,11 @@ class TokenizerMixin():
 
         for token in ToktokTokenizer().tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
     
     @staticmethod
-    def space_tokenizer(text):
+    def space_tokenizer(text, strip=None):
         ''' Only " " blank character
         Same as s.split(" ")
         >>> s = "Good muffins cost $3.88\nin New York. It's inexpensive. Free-for-all. Please buy me\ntwo of them.\n\nThanks."
@@ -203,11 +203,11 @@ class TokenizerMixin():
         
         for token in SpaceTokenizer().tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
 
     @staticmethod
-    def whitespace_tokenizer(text):
+    def whitespace_tokenizer(text, strip=None):
         ''' space, tab, newline
         Same as s.split()
         >>> s = "Good muffins cost $3.88\nin New York. It's inexpensive. Free-for-all. Please buy me\ntwo of them.\n\nThanks."
@@ -224,21 +224,21 @@ class TokenizerMixin():
         
         for token in WhitespaceTokenizer().tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
     
     @staticmethod
-    def tab_tokenizer(text):
-        ''' Tab'''
+    def tab_tokenizer(text,strip=None):
+        '''tab-based tokenization'''
         
         for token in TabTokenizer().tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
 
     
     @staticmethod
-    def wordpunct_tokenize(text):
+    def wordpunct_tokenize(text, strip=None):
         '''
         Using the regexp \w+|[^\w\s]+
         
@@ -258,11 +258,11 @@ class TokenizerMixin():
         
         for token in WordPunctTokenizer().tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
    
 
     @staticmethod
-    def treebank_word_tokenize(text):
+    def treebank_word_tokenize(text, strip=None):
         '''
         using NLTK’s recommended word tokenizer (currently an improved 
         TreebankWordTokenizer along with PunktSentenceTokenizer for the specified language)
@@ -277,11 +277,11 @@ class TokenizerMixin():
         
         for token in nltk.word_tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
 
         
     @staticmethod
-    def regexp_tokenize(text,pattern=None):
+    def regexp_tokenize(text,pattern=None,strip=None):
         '''
         >>> s = "Good muffins cost $3.88\nin New York. It's inexpensive. Free-for-all. Please buy me\ntwo of them.\n\nThanks."
         >>> tokenizer = RegexpTokenizer('\w+|\$[\d\.]+|\S+')
@@ -294,11 +294,11 @@ class TokenizerMixin():
         tokenizer = RegexpTokenizer(pattern or patterns.RE_WORD2)
         for token in tokenizer.tokenize(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
    
     @staticmethod
-    def punct_tokenize(text):
+    def punct_tokenize(text, strip=None):
         '''
         >>> s = "Good muffins cost $3.88\nin New York. It's inexpensive. Free-for-all. Please buy me\ntwo of them.\n\nThanks."
         >>> RE_PUNCT.split(s)
@@ -309,12 +309,12 @@ class TokenizerMixin():
         
         for token in patterns.RE_PUNCT.split(text): 
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
 
     
     
     @staticmethod
-    def nonalpha_tokenize(text):
+    def nonalpha_tokenize(text, strip=None):
         '''
         >>> s = "Good muffins cost $3.88\nin New York.  Please buy me\ntwo of them.\n\nThanks."
         >>> RE_NONALPHA.split(s)
@@ -324,11 +324,11 @@ class TokenizerMixin():
         
         for token in patterns.RE_NONALPHA.split(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
     
     @staticmethod
-    def whitespace_tokenize2(text):
+    def whitespace_tokenize2(text, strip=None):
         '''>>> s = "Good muffins cost $3.88\nin New York.  Please buy me\ntwo of them.\n\nThanks."
         >>> RE_WHITESPACE.split(s)
         ['Good', ' ', 'muffins', ' ', 'cost', ' ', '$3.88', '\n', 'in', ' ', 
@@ -337,15 +337,15 @@ class TokenizerMixin():
          
         for token in patterns.RE_WHITESPACE.split(text):
             if token not in patterns.PUNCTUATION and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
     
     @staticmethod
-    def tags_tokenize(text):
+    def tags_tokenize(text, strip=None):
         
         for token in patterns.RE_TAGS.split(text):
             if token and not token.isspace():
-                yield token
+                yield token.strip(strip)
     
 
 class StripperMixin():
@@ -476,7 +476,7 @@ class StripperMixin():
         
 
     @staticmethod
-    def strip_trailing_chars(text, chars=string.punctuation):   
+    def strip_chars(text, chars=string.punctuation):   
         '''Removes the beginning and ending punctuation marks from this line.'''
         return text.strip(chars)
     

@@ -33,7 +33,7 @@ Amontillado⁄NN⁄Amontillado
 And⁄CC⁄And I⁄PRP⁄I must⁄MD⁄must satisfy⁄VB⁄satisfy them⁄PRP⁄them Amontillado⁄NNP⁄Amontillado
 As⁄IN⁄As you⁄PRP⁄you are⁄VBP⁄be engaged⁄VBN⁄engage I⁄PRP⁄I am⁄VBP⁄be on⁄IN⁄on my⁄PRP$⁄my way⁄NN⁄way to⁄TO⁄to Luchesi⁄VB⁄Luchesi
 If⁄IN⁄If any⁄DT⁄any one⁄NN⁄one has⁄VBZ⁄have a⁄DT⁄a critical⁄JJ⁄critical turn⁄NN⁄turn it⁄PRP⁄it is⁄VBZ⁄be he⁄PRP⁄he
-He⁄PRP⁄He will⁄MD⁄will tell⁄VB⁄tell me⁄PRP⁄me Luchesi⁄NNP⁄Luchesi can⁄MD⁄can not⁄RB⁄not tell⁄VB⁄tell Amontillado⁄NNP⁄Amontillado from⁄IN⁄from Sherry⁄NNP⁄Sherry
+He⁄PRP⁄He will⁄MD⁄will tell⁄VB⁄tell me⁄PRP⁄me Luchesi⁄NNP⁄Luchesi cannot⁄NN⁄cannot tell⁄VB⁄tell Amontillado⁄NNP⁄Amontillado from⁄IN⁄from Sherry⁄NNP⁄Sherry
 And⁄CC⁄And yet⁄RB⁄yet some⁄DT⁄some fools⁄NNS⁄fool will⁄MD⁄will have⁄VB⁄have it⁄PRP⁄it that⁄IN⁄that his⁄PRP$⁄his taste⁄NN⁄taste is⁄VBZ⁄be a⁄DT⁄a match⁄NN⁄match for⁄IN⁄for your⁄PRP$⁄your own⁄JJ⁄own
 Come⁄NNP⁄Come let⁄VBD⁄let us⁄PRP⁄u go⁄VB⁄go
 Whither⁄PRP$⁄Whither
@@ -49,7 +49,7 @@ Let⁄VB⁄Let us⁄PRP⁄u go⁄VB⁄go nevertheless⁄RB⁄nevertheless
 The⁄DT⁄The cold⁄NN⁄cold is⁄VBZ⁄be merely⁄RB⁄merely nothing⁄NN⁄nothing
 Amontillado⁄NN⁄Amontillado
 You⁄PRP⁄You have⁄VBP⁄have been⁄VBN⁄be imposed⁄VBN⁄impose upon⁄IN⁄upon
-And⁄CC⁄And as⁄IN⁄a for⁄IN⁄for Luchesi⁄NNP⁄Luchesi he⁄PRP⁄he can⁄MD⁄can not⁄RB⁄not distinguish⁄VB⁄distinguish Sherry⁄NNP⁄Sherry from⁄IN⁄from Amontillado⁄NNP⁄Amontillado
+And⁄CC⁄And as⁄IN⁄a for⁄IN⁄for Luchesi⁄NNP⁄Luchesi he⁄PRP⁄he cannot⁄VBD⁄cannot distinguish⁄JJ⁄distinguish Sherry⁄NNP⁄Sherry from⁄IN⁄from Amontillado⁄NNP⁄Amontillado
 Thus⁄RB⁄Thus speaking⁄VBG⁄speak Fortunato⁄NNP⁄Fortunato possessed⁄VBD⁄possess himself⁄PRP⁄himself of⁄IN⁄of my⁄PRP$⁄my arm⁄NN⁄arm
 Putting⁄VBG⁄Putting on⁄IN⁄on a⁄DT⁄a mask⁄NN⁄mask of⁄IN⁄of black⁄JJ⁄black silk⁄NN⁄silk and⁄CC⁄and drawing⁄VBG⁄draw a⁄DT⁄a roquelaire⁄NN⁄roquelaire closely⁄RB⁄closely about⁄IN⁄about my⁄PRP$⁄my person⁄NN⁄person I⁄PRP⁄I suffered⁄VBD⁄suffer him⁄PRP⁄him to⁄TO⁄to hurry⁄VB⁄hurry me⁄PRP⁄me to⁄TO⁄to my⁄PRP$⁄my palazzo⁄NN⁄palazzo
 There⁄EX⁄There were⁄VBD⁄be no⁄DT⁄no attendants⁄NNS⁄attendant at⁄IN⁄at home⁄NN⁄home they⁄PRP⁄they had⁄VBD⁄have absconded⁄VBN⁄abscond to⁄TO⁄to make⁄VB⁄make merry⁄NN⁄merry in⁄IN⁄in honour⁄NN⁄honour of⁄IN⁄of the⁄DT⁄the time⁄NN⁄time
@@ -87,7 +87,7 @@ Come⁄NNP⁄Come I⁄PRP⁄I said⁄VBD⁄say with⁄IN⁄with decision⁄NN⁄
 You⁄PRP⁄You are⁄VBP⁄be rich⁄JJ⁄rich respected⁄VBN⁄respect admired⁄VBD⁄admire beloved⁄VBN⁄beloved you⁄PRP⁄you are⁄VBP⁄be happy⁄JJ⁄happy as⁄IN⁄a once⁄RB⁄once I⁄PRP⁄I was⁄VBD⁄be
 You⁄PRP⁄You are⁄VBP⁄be a⁄DT⁄a man⁄NN⁄man to⁄TO⁄to be⁄VB⁄be missed⁄VBN⁄miss
 For⁄IN⁄For me⁄PRP⁄me it⁄PRP⁄it is⁄VBZ⁄be no⁄DT⁄no matter⁄NN⁄matter
-We⁄PRP⁄We will⁄MD⁄will go⁄VB⁄go back⁄RB⁄back you⁄PRP⁄you will⁄MD⁄will be⁄VB⁄be ill⁄JJ⁄ill and⁄CC⁄and I⁄PRP⁄I can⁄MD⁄can not⁄RB⁄not be⁄VB⁄be responsible⁄JJ⁄responsible
+We⁄PRP⁄We will⁄MD⁄will go⁄VB⁄go back⁄RB⁄back you⁄PRP⁄you will⁄MD⁄will be⁄VB⁄be ill⁄JJ⁄ill and⁄CC⁄and I⁄PRP⁄I cannot⁄VBP⁄cannot be⁄VB⁄be responsible⁄JJ⁄responsible
 Besides⁄IN⁄Besides there⁄EX⁄there is⁄VBZ⁄be Luchesi⁄NNP⁄Luchesi Enough⁄NNP⁄Enough he⁄PRP⁄he said⁄VBD⁄say the⁄DT⁄the cough⁄NN⁄cough is⁄VBZ⁄be a⁄DT⁄a mere⁄JJ⁄mere nothing⁄NN⁄nothing it⁄PRP⁄it will⁄MD⁄will not⁄RB⁄not kill⁄VB⁄kill me⁄PRP⁄me
 I⁄PRP⁄I shall⁄MD⁄shall not⁄RB⁄not die⁄VB⁄die of⁄IN⁄of a⁄DT⁄a cough⁄NN⁄cough
 True⁄JJ⁄True true⁄JJ⁄true I⁄PRP⁄I replied⁄VBD⁄reply and⁄CC⁄and indeed⁄RB⁄indeed I⁄PRP⁄I had⁄VBD⁄have no⁄DT⁄no intention⁄NN⁄intention of⁄IN⁄of alarming⁄VBG⁄alarm you⁄PRP⁄you unnecessarily⁄RB⁄unnecessarily but⁄CC⁄but you⁄PRP⁄you should⁄MD⁄should use⁄VB⁄use all⁄DT⁄all proper⁄JJ⁄proper caution⁄NN⁄caution
@@ -102,7 +102,7 @@ He⁄PRP⁄He again⁄RB⁄again took⁄VBD⁄take my⁄PRP$⁄my arm⁄NN⁄arm
 These⁄DT⁄These vaults⁄NNS⁄vault he⁄PRP⁄he said⁄VBD⁄say are⁄VBP⁄be extensive⁄JJ⁄extensive
 The⁄DT⁄The Montresors⁄NNPS⁄Montresors I⁄PRP⁄I replied⁄VBD⁄reply were⁄VBD⁄be a⁄DT⁄a great⁄JJ⁄great and⁄CC⁄and numerous⁄JJ⁄numerous family⁄NN⁄family
 I⁄PRP⁄I forget⁄VBP⁄forget your⁄PRP$⁄your arms⁄NNS⁄arm
-A⁄DT⁄A huge⁄JJ⁄huge human⁄JJ⁄human foot⁄NN⁄foot dor⁄NN⁄dor in⁄IN⁄in a⁄DT⁄a field⁄NN⁄field azure⁄NN⁄azure the⁄DT⁄the foot⁄NN⁄foot crushes⁄VBZ⁄crush a⁄DT⁄a serpent⁄JJ⁄serpent rampant⁄NN⁄rampant whose⁄WP$⁄whose fangs⁄NNS⁄fang are⁄VBP⁄be imbedded⁄VBN⁄imbed in⁄IN⁄in the⁄DT⁄the heel⁄NN⁄heel
+A⁄DT⁄A huge⁄JJ⁄huge human⁄JJ⁄human foot⁄NN⁄foot d⁄NN⁄d or⁄CC⁄or in⁄IN⁄in a⁄DT⁄a field⁄NN⁄field azure⁄NN⁄azure the⁄DT⁄the foot⁄NN⁄foot crushes⁄VBZ⁄crush a⁄DT⁄a serpent⁄JJ⁄serpent rampant⁄NN⁄rampant whose⁄WP$⁄whose fangs⁄NNS⁄fang are⁄VBP⁄be imbedded⁄VBN⁄imbed in⁄IN⁄in the⁄DT⁄the heel⁄NN⁄heel
 And⁄CC⁄And the⁄DT⁄the motto⁄NN⁄motto
 Nemo⁄NNP⁄Nemo me⁄PRP⁄me impune⁄JJ⁄impune lacessit⁄NN⁄lacessit Good⁄NNP⁄Good
 he⁄PRP⁄he said⁄VBD⁄say
@@ -113,7 +113,7 @@ I⁄PRP⁄I paused⁄VBD⁄pause again⁄RB⁄again and⁄CC⁄and this⁄DT⁄t
 The⁄DT⁄The nitre⁄NN⁄nitre
 I⁄PRP⁄I said⁄VBD⁄say see⁄VBP⁄see it⁄PRP⁄it increases⁄VBZ⁄increase
 It⁄PRP⁄It hangs⁄VBZ⁄hang like⁄IN⁄like moss⁄NN⁄moss upon⁄IN⁄upon the⁄DT⁄the vaults⁄NNS⁄vault
-We⁄PRP⁄We are⁄VBP⁄be below⁄IN⁄below the⁄DT⁄the rivers⁄NNS⁄river bed⁄VBD⁄bed
+We⁄PRP⁄We are⁄VBP⁄be below⁄IN⁄below the⁄DT⁄the river⁄NN⁄river s⁄NN⁄s bed⁄NN⁄bed
 The⁄DT⁄The drops⁄NNS⁄drop of⁄IN⁄of moisture⁄NN⁄moisture trickle⁄NN⁄trickle among⁄IN⁄among the⁄DT⁄the bones⁄NNS⁄bone
 Come⁄NNP⁄Come we⁄PRP⁄we will⁄MD⁄will go⁄VB⁄go back⁄RB⁄back ere⁄RB⁄ere it⁄PRP⁄it is⁄VBZ⁄be too⁄RB⁄too late⁄JJ⁄late
 Your⁄PRP$⁄Your cough⁄NN⁄cough It⁄PRP⁄It is⁄VBZ⁄be nothing⁄NN⁄nothing he⁄PRP⁄he said⁄VBD⁄say let⁄VB⁄let us⁄PRP⁄u go⁄VB⁄go on⁄IN⁄on
@@ -158,7 +158,7 @@ From⁄IN⁄From one⁄CD⁄one of⁄IN⁄of these⁄DT⁄these depended⁄VBD�
 Throwing⁄VBG⁄Throwing the⁄DT⁄the links⁄NNS⁄link about⁄IN⁄about his⁄PRP$⁄his waist⁄NN⁄waist it⁄PRP⁄it was⁄VBD⁄be but⁄CC⁄but the⁄DT⁄the work⁄NN⁄work of⁄IN⁄of a⁄DT⁄a few⁄JJ⁄few seconds⁄NNS⁄second to⁄TO⁄to secure⁄VB⁄secure it⁄PRP⁄it
 He⁄PRP⁄He was⁄VBD⁄be too⁄RB⁄too much⁄JJ⁄much astounded⁄VBD⁄astound to⁄TO⁄to resist⁄VB⁄resist
 Withdrawing⁄VBG⁄Withdrawing the⁄DT⁄the key⁄NN⁄key I⁄PRP⁄I stepped⁄VBD⁄step back⁄RB⁄back from⁄IN⁄from the⁄DT⁄the recess⁄NN⁄recess
-Pass⁄NNP⁄Pass your⁄PRP$⁄your hand⁄NN⁄hand I⁄PRP⁄I said⁄VBD⁄say over⁄IN⁄over the⁄DT⁄the wall⁄NN⁄wall you⁄PRP⁄you can⁄MD⁄can not⁄RB⁄not help⁄VB⁄help feeling⁄VBG⁄feel the⁄DT⁄the nitre⁄NN⁄nitre
+Pass⁄NNP⁄Pass your⁄PRP$⁄your hand⁄NN⁄hand I⁄PRP⁄I said⁄VBD⁄say over⁄IN⁄over the⁄DT⁄the wall⁄NN⁄wall you⁄PRP⁄you cannot⁄VBP⁄cannot help⁄VB⁄help feeling⁄VBG⁄feel the⁄DT⁄the nitre⁄NN⁄nitre
 Indeed⁄RB⁄Indeed it⁄PRP⁄it is⁄VBZ⁄be very⁄RB⁄very damp⁄JJ⁄damp
 Once⁄RB⁄Once more⁄JJR⁄more let⁄NN⁄let me.implore⁄NN⁄me.implore you⁄PRP⁄you to⁄TO⁄to return⁄VB⁄return
 No⁄DT⁄No

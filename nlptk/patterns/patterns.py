@@ -25,10 +25,17 @@ INTJ    междометие  ой
 #https://www.regular-expressions.info/posixbrackets.html
 
 # '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~'  32 символа
-PUNCTUATION = string.punctuation + '\u2014\u2013\u2012\u2010\u2212' + '«»‹›‘’“”„'
+#\u2026 -  многоточие  :          …
+#\u2014 -  длинное тире:          —
+#\u2013    cреднее тире:          –
+#\u2012    цифровое тире:         ‒
+#\u2010    дефис(настоящий):      ‐
+#\u2212    знак минус(настоящий): −
+
+PUNCTUATION = string.punctuation + '\u2026\u2014\u2013\u2012\u2010\u2212' + '«»‹›‘’“”„'
 
 RE_PUNCT_EXTENDED = re.compile(re.escape(PUNCTUATION))
-RE_HYPHENATION = re.compile(r'[-]+\s*\r?\n\s*')
+RE_HYPHENATION = re.compile(r'[-]+[\x20]*\r?\n\s*')
 # from textacy
 RE_HYPHENATED_WORD = re.compile(
     r"(\w{2,}(?<!\d))\-\s+((?!\d)\w{2,})",
@@ -65,22 +72,23 @@ RE_PUNCT = re.compile(r'([%s])+' % re.escape(string.punctuation), re.UNICODE)
 RE_PUNCT2 = re.compile(r'([\s%s])+' % re.escape(''.join(set(string.punctuation) - {"'","`"})), re.UNICODE)
 RE_TAGS = re.compile(r"<([^>]+)>", re.UNICODE)                     # html
 RE_URLS = re.compile(r"(www|http:|https:)+[^\s]+[\w]", re.UNICODE) # urls
-RE_DIGIT = re.compile(r"[0-9]+", re.UNICODE)     # все арабско-индийские цифры
-RE_DECIMAL = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры
-RE_NUMERIC = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры
+RE_DIGIT = re.compile(r"[0-9]+", re.UNICODE)     # все арабско-индийские цифры (изменить)
+RE_DECIMAL = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры (изменить)
+RE_NUMERIC = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры (изменить)
 RE_NONALPHA = re.compile(r"[\W]", re.UNICODE)    # все небуквенные символы
-RE_NONLETTER = re.compile(r"(\W)\1", re.UNICODE)      # все повторяющиеся двухсмивольные наборы небуквенных символов
-#RE_NONLETTER = re.compile(r"\b[\W]{2,}\b", re.UNICODE)     # все наборы из небуквенных символов длиной от 2-х символов
-RE_NONASCII= re.compile(r"([^a-z]+)", re.UNICODE|re.I) # все не латинские буквы
-RE_AL_NUM = re.compile(r"([a-z]+)([0-9]+)", flags=re.UNICODE|re.I) # все сочетания из латинские буквы и последующих цифр
-RE_NUM_AL = re.compile(r"([0-9]+)([a-z]+)", flags=re.UNICODE|re.I) # все сочетания из цифр и последующих латинскихе букв
+RE_NONLETTER2 = re.compile(r'(\W)\1', re.UNICODE)        # все повторяющиеся двухсимвольные наборы небуквенных символов
+RE_NONLETTER = re.compile(r'(?=(\W))\1{2,}', re.UNICODE) # все наборы из небуквенных символов длиной от 2-х символов
+RE_NONASCII= re.compile(r'([^a-z]+)', re.UNICODE|re.I) # все не латинские буквы
+RE_AL_NUM = re.compile(r'([a-z]+)([0-9]+)', flags=re.UNICODE|re.I) # все сочетания из латинские буквы и последующих цифр
+RE_NUM_AL = re.compile(r'([0-9]+)([a-z]+)', flags=re.UNICODE|re.I) # все сочетания из цифр и последующих латинскихе букв
 RE_ASCII = re.compile(r"[\x00-\x7F]+", flags=re.UNICODE)  # все ASCII символы - печатные и непечатные
-RE_LATIN = re.compile(r"([a-z]+)", flags=re.UNICODE|re.I) # все латинские буквы
-RE_WHITESPACE = re.compile(r"(\s)+", re.UNICODE) # все  пробельные символы
-RE_BLANK = re.compile(r"[ \t]+", re.UNICODE)     # только пробел и tab
+RE_LATIN = re.compile(r'([a-z]+)', flags=re.UNICODE|re.I) # все латинские буквы
+RE_WHITESPACE = re.compile(r'(\s)+', re.UNICODE) # все  пробельные символы
+RE_BLANK = re.compile(r'[ \t]+', re.UNICODE)     # только пробел и tab
 RE_HYPHENATION = re.compile(r'[-]+\s*\r?\n\s*',re.UNICODE) # переносы слов
 
 RE_QOUTES = re.compile(r'["\'«»‹›‘’“”„`]',re.UNICODE)
+RE_QOUTES = re.compile(r'["«»‹›‘’“”„`]',re.UNICODE)
 
 RE_ALPHABETIC = re.compile(r'(((?![\d])\w)+)', re.UNICODE)
 RE_HTML_ENTITY = re.compile(r'&(#?)([xX]?)(\w{1,8});', re.UNICODE)

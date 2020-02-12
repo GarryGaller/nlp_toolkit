@@ -1,5 +1,6 @@
-import os, sys
+import os, sys, io
 import io, glob
+import string
 import dawg
 import pickle
 import math
@@ -59,9 +60,15 @@ class Prep(TokenizerMixin,
         
         defaults = {
             'sentencizer':self.sentencize_nltk, 
-            'tokenizer':self.treebank_word_tokenize,
+            'tokenizer':partial(
+                self.toktok_tokenize,       #self.treebank_word_tokenize,
+                strip=string.punctuation    # ''.join(set(string.punctuation) - {"'"})
+            ),
             'tagger':self.tagger_nltk, # self.tagger_4ngram
-            'lemmatizer':partial(self.lemmatize_nltk,pos=True) #tagset='universal'
+            'lemmatizer':partial(
+                    self.lemmatize_nltk,
+                    pos=True,
+                    normalize_uppercase=str.capitalize) #tagset='universal'
         }
         
         self.__dict__.update({
@@ -135,8 +142,13 @@ class TokenFilter(RemoverMixin):
     LEXICON_COMMON = Lexicon(os.path.join(LEXPATH, 'lexicon')).load()
     #STOPWORDS = Lexicon(os.path.join(LEXPATH, 'stopwords')).load()
     STOPWORDS = nltk.corpus.stopwords.words('english') + [
+        'mr', 'mrs',
+        'mr.', 'mrs.',
         'Mr', 'Mrs', 
-        'st','sir', 'Miss',
+        'Mr.', 'Mrs.',
+        'st', 'st.',
+        'St', 'St.',
+        'sir', 'Miss',
         'www','htm','html',
         'shall','must'
     ]
@@ -219,11 +231,10 @@ class Stream():
             print(line)
     '''        
     
-    def __init__(self, path=None, encoding=None):
+    def __init__(self, input=None, encoding=None):
         
         self._encoding = encoding
-        self._input = path
-        
+        self._input = input
         if not isinstance(self._input,io.TextIOBase):
             self._encoding = (
                 self._encoding(self._input)  
@@ -233,7 +244,7 @@ class Stream():
             self._path = self._input
             self._input = open(self._input,'r',encoding=self._encoding)
         else:
-            self._path = self._input.name
+            self._path = input.__class__.__name__
                 
     
     def _liner(self,sentencizer,clean):
@@ -267,24 +278,33 @@ class Corpus():
             prep:Prep, 
             clean:TextCleaner, 
             filters:TokenFilter=None, 
-            save=True, verbose=False
+            datadir="data",
+            verbose=False,
+            autosave=True, 
+            filtrate=False,
+            rewrite=False
         ):
         self._inputs = inputs
+        self._paths = []
+        self._datadir = datadir
         #self._texts = [] 
         self._prep = prep
         self._clean = clean
         self._filters = filters
         self._vocab = Vocabulary()
-        self._save = save
+        self.autosave = autosave
         self.verbose = verbose
-        
+        self.rewrite = rewrite
+        self.filtrate = filtrate
+        self.name = 'corpus'
+    
     def __texts__(self):
         
         for path in self._inputs:
-            
+            self._paths.append(path)
             dtxt = datapath(path, ext=".txt").full
             ddawg = datapath(path, ext=".dawg").full
-            if (
+            if self.rewrite or (
                 not os.path.exists(dtxt)
                 ):
                 prep, clean,filters = self._prep, self._clean, self._filters 
@@ -303,11 +323,7 @@ class Corpus():
             if self.verbose:
                 print('elapsed:  ',time.time() - start)
             
-            if self._save and not os.path.exists(dtxt): 
-               text.save(format="txt")
-               print('save:     ', time.time() - start)
-            #self._texts.append(text)
-            words = text.words()
+            words = text.words(filtrate=self.filtrate) # не фильтруем?
             self._vocab += Vocabulary(words)
             
             if self.verbose:
@@ -317,12 +333,43 @@ class Corpus():
                 print('vocab:', wraptext)
                 print('add vocab:',time.time() - start)
             
+            if self.autosave and (self.rewrite or not os.path.exists(dtxt)): 
+                text.save(format="txt")
+                if self.verbose:
+                    print('saving:   ', time.time() - start)
+            #self._texts.append(text)
+            
             yield text
     
+    
+    def filenames(self,n_doc=None):
+        if n_doc is not None:
+            res = os.path.basename(self._paths[n_doc])
+        else:
+            res = [os.path.basename(filename) 
+                for filename in self._paths
+            ]
+        return res
+        
+    @property
+    def names(self):
+        return self.filenames()
     
     @property
     def ndocs(self):
         return self._vocab.ndocs
+    
+    @property
+    def nwords(self):
+        return self._vocab.nwords
+    
+    @property
+    def nlemmas(self):
+        return len(self._vocab._ccfs)
+    
+    @property
+    def nhapaxes(self):
+        return len(self._vocab.hapaxes())
     
     def hapaxes(self,n_doc=None):
          return self._vocab.hapaxes(n_doc)
@@ -386,17 +433,41 @@ class Corpus():
             res = obj     
         return res
     
+    '''
+    def save(self):
+        path = datapath(self.name,self._datadir,".pickle").full
+        pickle.dump(self, open(path,'wb'))
+    '''
+   
+    @staticmethod
+    def load(name,datadir):
+        path = datapath(name, datadir, ".pickle").full
+        return pickle.load(open(path,'rb'))
+    
+    
     def __iter__(self):
         return self.__texts__()
     
     def __next__(self):
         return next(self.__texts__())
     
-    def __str__(self):
-        pass
+    #def __str__(self):
+    #    return str(self.names)
     
     def __repr__(self):
-        fmt = "Corpus(nwords={}, nlemmas={})".format()
+        fmt = (
+            "Corpus(\n\tnames={},\n\t"
+            "ndocs={},\n\tnwords={},\n\t"
+            "nlemmas={},\n\tnhapaxes={}\n)"
+        ) 
+         
+        return fmt.format(
+                shorten(str(self.names[:5]), width=80, placeholder="...]"),
+                self.ndocs,
+                self.nwords, 
+                self.nlemmas,
+                self.nhapaxes,
+            )
 
 
 class Text():
@@ -408,17 +479,39 @@ class Text():
     '''    
     
     def __init__(self, 
-                    path:str, 
+                    intake, 
                     prep:Prep=None, 
                     clean:TextCleaner=None, 
                     filters:TokenFilter=None,
                     inplace=False, 
                     datadir="data",
                     encoding=chardetector,
-                    verbose=True
+                    verbose=True,
+                    input='filename' # str {'filename', 'file', 'text'}
         ):
-        self._path = path
-        self._encoding = encoding
+        
+        self._path = ''
+        self.filename = '' 
+        self._encoding = None
+
+        if input == 'filename': 
+            self._path = intake
+            #self.filename = os.path.basename(os.path.splitext(self._path)[0])
+            self.filename = os.path.basename(self._path)
+            self._encoding = encoding
+            self._input = intake
+            
+        elif input == "text":
+            self._input = io.StringIO(intake)
+            self._path = ''
+            self.filename = self._input.__class__.__name__ 
+        
+        elif input == "file":
+            self._input = intake
+            self._path = ''
+            self.filename = self._input.__class__.__name__ 
+            
+        
         self._datadir = datadir
         self._sents = []  # all sentences from the text
         #self._words = [] # all words from the text
@@ -426,8 +519,7 @@ class Text():
         self._clean = clean
         self._filters = filters
         self._vocab = FreqDist() # Counter()  # all unique normalized words from the text
-        #self.filename = os.path.basename(os.path.splitext(self._path)[0])
-        self.filename = os.path.basename(self._path)
+        
         self.verbose = verbose
         
         if inplace:
@@ -436,7 +528,7 @@ class Text():
  
     def __sents__(self):
         if self._prep:
-            stream = Stream(self._path,encoding=self._encoding)
+            stream = Stream(self._input,encoding=self._encoding)
             for num,sent in enumerate(
                     stream(self._prep.sentencizer, self._clean)
                 ):
@@ -461,10 +553,6 @@ class Text():
         return self._vocab
     
     @property
-    def sents(self):
-        return self._sents
-    
-    @property
     def nsents(self):
         return len(self._sents) 
     
@@ -476,6 +564,27 @@ class Text():
     def nlemmas(self):
         return len(self._vocab)
     
+    def sents(self, n_sent=None, max_words=None, min_words=None):
+        if n_sent is not None:
+            res = self._sents[n_sent]
+        else:
+            if min_words is not None and max_words is not None:
+                res = [sent for sent in self._sents 
+                    if min_words <= sent.nwords <= max_words
+                ]    
+            else:
+                if max_words is not None:
+                    res = [sent for sent in self._sents 
+                        if sent.nwords <= max_words
+                    ]
+                elif min_words is not None:
+                    res = [sent for sent in self._sents 
+                        if sent.nwords >= min_words
+                    ]    
+                    
+                else:
+                    res = self._sents
+        return res
     
     def words(self, filtrate=True, lower=True):
         result = []
@@ -528,7 +637,8 @@ class Text():
             result = result, cond   
         
         return result
-        
+    
+    '''    
     def postags2(self, pos=None):
         words = []
         for sent in self._sents:
@@ -541,7 +651,8 @@ class Text():
         if pos:
            return tags.get(pos)
         return tags
- 
+    '''
+    
     def doc2bow(self):
         pass
     
@@ -623,12 +734,15 @@ class Text():
         return next(self.__sents__())
      
     def __str__(self):
-        pass
+        return '\n'.join([str(sent) for sent in self.sents()])
     
     def __repr__(self):
-        fmt = "Text(name='{}', nsents={}, nwords={}, nlemmas={})"
+        fmt = "Text(\n\tname='{}',\n\tnsents={},\n\tnwords={},\n\tnlemmas={}\n)"
         return fmt.format(
-            self.filename, self.nsents, self.nwords, self.nlemmas
+            self.filename, 
+            self.nsents, 
+            self.nwords, 
+            self.nlemmas
         )
 
 
@@ -641,19 +755,22 @@ class TaggedSentence():
         self._delim = delim
         self._prep = prep
         self._filters = filters or (lambda s:s)
+        self._nwords = 0
         if prep:
             self._sent = self.tagging(sent)
         else:
             self._sent = sent
-    
+            self._nwords = len(self.untagging())    
+            
     def tagging(self, sent):
         
         tokens = [token for token in self._prep.tokenizer(sent) if token]
-        lemmas = list(self._prep.lemmatizer(tokens))
+        lemmas = list(self._prep.lemmatizer(tokens,tagger=self._prep.tagger))
         
         threes = []
         for token,(lemma,pos) in zip(tokens,lemmas):
-           threes.append(self._delim.join([token,pos,lemma]))    
+           threes.append(self._delim.join([token,pos,lemma]))
+           self._nwords += 1    
         tagged_sent = ' '.join(threes)    
         
         return tagged_sent
@@ -680,24 +797,51 @@ class TaggedSentence():
     def n(self):
         return self._n
     
+    @property
+    def nwords(self):
+       return self._nwords
+       
+    
     def raw(self):
         sent = self.untagging(self._sent)
         return ' '.join(chunk[0] for chunk in sent)
     
-    def words(self,lower=True):
+    def words(self, lower=True, pos=None):
         sent = self.untagging(self._sent)
         lower = str.lower if lower else lambda s: s
-        return tuple(lower(chunk[0]) for chunk in sent)
+        
+        if isinstance(pos,set):
+            res = tuple(lower(chunk[0]) 
+                    for chunk in sent if chunk[1] in pos
+            )
+        elif isinstance(pos,str):
+            res = tuple(lower(chunk[0]) 
+                    for chunk in sent if chunk[1].startswith(pos) 
+            )   
+        else:
+            res = tuple(lower(chunk[0]) for chunk in sent)
+        return res
         
     def pos(self):
         sent = self.untagging(self._sent)
         return tuple(chunk[1] for chunk in sent)
     
-    def lemmas(self, lower=True):
+    def lemmas(self, lower=True, pos=None):
         sent = self.untagging(self._sent)
         lower = str.lower if lower else lambda s: s
-        return tuple(lower(chunk[2]) for chunk in sent)
-    
+        
+        if isinstance(pos,set):
+            res = tuple(lower(chunk[2]) 
+                    for chunk in sent if chunk[1] in pos
+            )
+        elif isinstance(pos,str):
+            res = tuple(lower(chunk[2]) 
+                    for chunk in sent if chunk[1].startswith(pos) 
+            )   
+        else:
+            res = tuple(lower(chunk[2]) for chunk in sent)
+        return res
+        
     def tokens(self, filtrate=False, **kwargs):
         sent = self.untagging(self._sent)
         
@@ -714,8 +858,8 @@ class TaggedSentence():
         return self._sent
 
     def __repr__(self):
-        fmt = "TaggedSentence('{}', n={})"
-        return fmt.format(self._sent.replace(' ','\n'), self._n)
+        fmt = "TaggedSentence(\n\t'{}',\n\t n={}\n)"
+        return fmt.format(self._sent, self._n)
 
 
 class Token():
@@ -781,7 +925,7 @@ My poor friend found it impossible to reply for many minutes.
     )
     
     rules_filter=OrderedDict(
-        by_tagpos=(True,{},{"FW"}),
+        by_tagpos=(True,{},{"FW","POS"}), #игнорировать иностранные слова и possessive ending parent'
         short=(True,3),
         ifnotin_lexicon=True
         #trailing_chars=True
@@ -797,9 +941,27 @@ My poor friend found it impossible to reply for many minutes.
     
     
     #for path in Path(source,"*.txt"):
+    intake = os.path.join(MODULEDIR,r'corpus\test\1.txt')
+    inp = 'filename'
+    #intake = 'hello world'
+    #inp='text'
+    #intake = sys.stdin
+    #inp = 'file'
+    text = Text(intake, prep=prep, clean=clean, filters=filters, input=inp)
+    print(list(text))
+    print(text)
+    print(repr(text))
+    quit()
+    
+    
+    
     start_line = time.time()
     corpus = Corpus(Path(source,"*.txt"), prep, clean, filters)
+    
     corpus.verbose = True
+    print(repr(corpus))
+    quit()
+    
     for text in corpus:    
        
         for i,sent in enumerate(text):

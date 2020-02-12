@@ -85,7 +85,7 @@ class PatternLemmatizer():
     def lemmatize(self, tokens, **kwargs):
         
         result = [] 
-        tagger = kwargs.get('tagger',self.tagger) 
+        tagger = kwargs.get('tagger') or self.tagger
         tags = tagger(' '.join(tokens))
         for term,pos in tags:
             lemma = self.__lemmatize__(term,**kwargs)
@@ -159,9 +159,21 @@ class NLTKLemmatizer():
     
     
     def lemmatize(self, tokens, **kwargs):
-        tagset = kwargs.get('tagset') or self.__dict__.get('tagset')
+        
         result = [] 
-        tagger = kwargs.get('tagger',self.tagger)
+        tagger = kwargs.get('tagger') or self.tagger
+        tagset = kwargs.get('tagset') or self.__dict__.get('tagset')
+        normalize_uppercase = (
+                        kwargs.get('normalize_uppercase') 
+                        or 
+                        self.__dict__.get('normalize_uppercase') 
+        )
+        
+        if normalize_uppercase:
+            tokens = [normalize_uppercase(token) 
+                        if token.isupper() 
+                        else token for token in tokens
+            ]
         for term,pos in tagger(tokens,tagset=tagset):
             pos_wordnet = self.get_wordnet_pos(pos)
             lemma = self.__lemmatize__(term,pos=pos_wordnet) 
@@ -259,7 +271,27 @@ if __name__ == "__main__":
     from pprint import pprint
     import nltk
     from nlptk.misc.mixins import TaggerMixin
-  
+    print(NLTKLemmatizer().lemmatize(['GRAY'],pos=True,tagset="universal"))
+    print(NLTKLemmatizer().lemmatize(['GRAY'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    print(NLTKLemmatizer().lemmatize(['Gray'],pos=True,tagset="universal"))
+    print(NLTKLemmatizer().lemmatize(['Gray'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    print(NLTKLemmatizer().lemmatize(['gray'],pos=True,tagset="universal"))
+    print(NLTKLemmatizer().lemmatize(['gray'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    print(NLTKLemmatizer().lemmatize(['Picture'],pos=True))
+    print(NLTKLemmatizer().lemmatize(['Picture'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    print(NLTKLemmatizer().lemmatize(['PICTURE'],pos=True))
+    print(NLTKLemmatizer().lemmatize(['PICTURE'],pos=True,tagger=TaggerMixin().tagger_4ngram)) 
+    print(NLTKLemmatizer().lemmatize(['Preface'],pos=True))
+    print(NLTKLemmatizer().lemmatize(['Preface'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    print(NLTKLemmatizer().lemmatize(['PREFACE'],pos=True))
+    print(NLTKLemmatizer().lemmatize(['PREFACE'],pos=True,tagger=TaggerMixin().tagger_4ngram))                                                                                             
+    
+    print(NLTKLemmatizer().lemmatize(['BY'],pos=True))
+    print(NLTKLemmatizer().lemmatize(['BY'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    print(NLTKLemmatizer().lemmatize(['By'],pos=True))
+    print(NLTKLemmatizer().lemmatize(['By'],pos=True,tagger=TaggerMixin().tagger_4ngram))
+    quit() 
+    
      
     sent = 'This was invitation enough'.split()
     print(NLTKLemmatizer().lemmatize(sent,pos=True))

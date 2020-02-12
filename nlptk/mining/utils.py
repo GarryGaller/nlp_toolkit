@@ -60,7 +60,9 @@ def pad_sequences(
     
 class datapath():
     
-    def __init__(self,path, datadir="data", ext=".txt"):
+    def __init__(self, path, datadir="data", ext=".txt"):
+        if not path:
+            raise ValueError('Path not passed')
         self.appdir = os.path.abspath(os.path.dirname(__file__))
         self.datadir = datadir
         self.ext = ext

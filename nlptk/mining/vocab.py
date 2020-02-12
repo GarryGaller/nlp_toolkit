@@ -7,16 +7,61 @@ from nlptk.measures.tfidf import TfidfModel
 import numpy as np
 
 class Vocabulary():
+    '''Class for storing various counters for words and documents
     
+    >>> corpus = [
+        ('simple', 'example', 'example', 'with', 'cats', 'and', 'mouse'),
+        ('another' 'simple' 'example' 'with' 'dogs' 'and' 'cats'),
+        ('another' 'simple' 'example' 'with' 'mouse' 'and' 'cheese')
+    ]
+    >>> vocab = Vocabulary()
+    >>> for doc in corpus:
+            vocab += Vocabulary(corpus)
+
+    >>> vocab.tfidf(0,'example')
+    0.0
+    >>> vocab.ndocs
+    3
+    >>> # each word in the dictionary is assigned a unique identifier
+    >>> vocab._vocab
+    defaultdict(<function Vocabulary.__init__.<locals>.<lambda> at 0x081F3228>,
+            {'and': 5,
+             'another': 7,
+             'cats': 4,
+             'cheese': 9,
+             'dogs': 8,
+             'example': 2,
+             'mouse': 6,
+             'simple': 1,
+             'with': 3})
+    >>> # word frequencies for each document separately
+    >>> [vocab.cfs(n) for n in range(vocab.ndocs)]
+    [{'and': 1, 'cats': 1, 'example': 2,  'mouse': 1, 'simple': 1, 'with': 1},
+     {'and': 1, 'another': 1, 'cats': 1, 'dogs': 1, 'example': 1, 'simple': 1,'with': 1},
+     {'and': 1, 'another': 1, 'cheese': 1, 'example': 1, 'mouse': 1, 'simple': 1,'with': 1}
+    ]
+    >>> # the frequency of words in the entire corpus of documents
+    >>> vocab.ccfs()
+    {'and': 3,
+    'another': 2,
+    'cats': 2,
+    'cheese': 1,
+    'dogs': 1,
+    'example': 4,
+    'mouse': 2,
+    'simple': 3,
+    'with': 3}
+    >>> #number of documents in which the word occurs
+    >>> vocab.dfs() 
+    {'and': 3, 'another': 2, 'cats': 2, 'cheese': 1, 
+    'dogs': 1,'example': 3,'mouse': 2,'simple': 3,'with': 3}
+    >>> vocab.hapaxes()  # single words
+    ['cheese', 'dogs']
+    '''
     
     def __iadd__(self,other):
         if other.tokens:
-            self._iter_ndocs() 
-            self._iter_vocab(other.tokens)
-            self._iter_cfs(other.tokens)
-            self._iter_ccfs(other.tokens)
-            self._iter_dfs(other.tokens)
-            self._iter_tfidf()
+            self._step_iter(other.tokens)
         return self
     
     def __init__(self,tokens:List[str]=[]):
@@ -24,6 +69,7 @@ class Vocabulary():
         #all_tokens = chain.from_iterable(corpus)
         self.tokens = tokens 
         self.ndocs = 0
+        self.nwords = 0
         # словарь всех токенов в корпусе отображающий их частоту
         self._ccfs = Counter()
         # словарь всех токенов корпуса отображающий их идентификаторы
@@ -42,15 +88,17 @@ class Vocabulary():
         # список словарей с TF-IDF для каждого документа в корпусе
         self._tfidf  = []  
         
-        '''
+        self._step_iter(tokens)
+         
+    def _step_iter(self,tokens):
         if tokens:
             self._iter_ndocs() 
+            self._iter_nwords(tokens)
             self._iter_vocab(tokens)
             self._iter_cfs(tokens)
             self._iter_ccfs(tokens)
             self._iter_dfs(tokens)
-            self._iter_tfidf()    
-        '''
+            self._iter_tfidf()       
     
     def tok2id(self,tokens):
         return [self._vocab[token] for token in tokens]
@@ -78,16 +126,21 @@ class Vocabulary():
     
     
     def _iter_ndocs(self):
+        '''Total number of documents in the collection'''
         self.ndocs += 1
     
+    def _iter_nwords(self,tokens):
+        '''Total number of documents in the collection'''
+        self.nwords += len(tokens)
     
     def _iter_ccfs(self,tokens):
+        '''The frequency of words in the entire corpus of documents'''
         tokens = self.tok2id(tokens)
         self._ccfs += Counter(tokens)     
         
     
     def _iter_vocab(self,tokens):
-        
+        ''' Each word in the dictionary is assigned a unique identifier'''
         tokens = set(tokens)
         for key in tokens:
             self._vocab[key]
@@ -102,17 +155,19 @@ class Vocabulary():
     '''
     
     def _iter_dfs(self,tokens):    
+        '''Document frequency - number of documents in which the word occurs'''
         tokens = self.tok2id(tokens)
         for token in set(tokens):
             self._dfs[token] += 1
         
     def _iter_cfs(self,tokens):        
+        '''Word frequencies for each document'''
         tokens = self.tok2id(tokens)
         self._cfs.append(Counter(tokens))
     
     
     def tf(self, n_doc, token=None):
-        
+        '''Relative frequency of words'''
         if token:
             idx = self.tok2map(token)
             return self._tf[n_doc].get(idx,0)
@@ -124,7 +179,7 @@ class Vocabulary():
                       
     
     def idf(self, token=None):
-        
+        '''Reverse document frequency'''
         if token:
             idx = self.tok2map(token)
             return self._idf.get(idx,0)
@@ -135,7 +190,7 @@ class Vocabulary():
     
     
     def cfs(self, n_doc, token=None):
-        
+        '''Word frequencies for each document'''
         if token:
             idx = self.tok2map(token)
             return self._cfs[n_doc].get(idx,0)
@@ -147,7 +202,7 @@ class Vocabulary():
     
        
     def dfs(self, token=None):
-        
+        '''Document frequency - number of documents in which the word occurs'''
         if token:
             idx = self.tok2map(token)
             return self._dfs.get(idx,0)
@@ -158,7 +213,7 @@ class Vocabulary():
     
         
     def ccfs(self, token=None):
-        
+        '''The frequency of words in the entire corpus of documents'''
         if token:
             idx = self.tok2map(token)
             return self._ccfs.get(idx,0)
@@ -382,8 +437,8 @@ Another simple example with mouse and cheese
     print('--freq--')
     pprint(vocab.freq())
     
-    #tfidf = lambda cf,nwords,df,ndocs: (cf/nwords) * ((math.log(ndocs + 1)/(df + 1)) + 1)
-    
+    #tfidf = lambda cf,nwords,df,ndocs: (cf/nwords) * (math.log((ndocs + 1)/(df + 1)) + 1)
+    #tfidf = lambda cf,nwords,df,ndocs: (cf/nwords) * math.log(ndocs/df)
     columns = vocab._vocab.keys()
     
     
