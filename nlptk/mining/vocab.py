@@ -364,7 +364,9 @@ class Vocabulary():
         
         result = []
         #result = [token for token, freq in cfs.items() if freq == 1]
-        for token,freq in cfs.most_common()[:-len(cfs)-1:-1]:
+        data = sorted(cfs.items(),key=lambda t:t[1])
+        #data = cfs.most_common()[:-len(cfs)-1:-1]
+        for token,freq in data:
             if freq == 1:
                 result.append(token)
             elif freq > 1:

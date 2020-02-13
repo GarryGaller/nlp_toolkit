@@ -208,7 +208,8 @@ class Path():
     def __init__(self, source, pattern):
         self.source = source
         self.pattern = pattern     
-  
+        self._iter = self.__paths__() 
+    
     def __paths__(self):
         source = os.path.join(self.source, self.pattern)
         
@@ -218,10 +219,11 @@ class Path():
             yield os.path.join(source, filename)
     
     def __iter__(self):
-        return  self.__paths__()            
+        return self._iter        
     
     def __next__(self):
-        return next(self.__paths__())
+        return next(self._iter)
+
 
 
 class Stream():
@@ -247,7 +249,8 @@ class Stream():
             self._path = input.__class__.__name__
                 
     
-    def _liner(self,sentencizer,clean):
+    def __call__(self,sentencizer=None,clean=None):
+        """Read lines from filepath."""
         
         with self._input as fd:
             if sentencizer:
@@ -258,15 +261,11 @@ class Stream():
                     raise 
                 if clean:
                     text = clean(text)
-                return sentencizer(text)
+                yield from sentencizer(text)
             else:
-                return fd
-    
-    def __call__(self,sentencizer=None,clean=None):
-        """Read lines from filepath."""
-        
-        for line  in self._liner(sentencizer,clean):
-            yield line
+                for line in fd:
+                    yield line
+   
         
 
 
@@ -297,6 +296,7 @@ class Corpus():
         self.rewrite = rewrite
         self.filtrate = filtrate
         self.name = 'corpus'
+        self._iter = self.__texts__()
     
     def __texts__(self):
         
@@ -446,10 +446,10 @@ class Corpus():
     
     
     def __iter__(self):
-        return self.__texts__()
+        return self._iter
     
     def __next__(self):
-        return next(self.__texts__())
+        return next(self._iter)
     
     #def __str__(self):
     #    return str(self.names)
@@ -492,12 +492,14 @@ class Text():
         
         self._path = ''
         self.filename = '' 
+        self.name = ''
         self._encoding = None
 
         if input == 'filename': 
             self._path = intake
             #self.filename = os.path.basename(os.path.splitext(self._path)[0])
             self.filename = os.path.basename(self._path)
+            self.name = os.path.splitext(self.filename)[0]
             self._encoding = encoding
             self._input = intake
             
@@ -505,12 +507,13 @@ class Text():
             self._input = io.StringIO(intake)
             self._path = ''
             self.filename = self._input.__class__.__name__ 
-        
+            self.name = self.filename
+            
         elif input == "file":
             self._input = intake
             self._path = ''
             self.filename = self._input.__class__.__name__ 
-            
+            self.name = self.filename
         
         self._datadir = datadir
         self._sents = []  # all sentences from the text
@@ -519,35 +522,49 @@ class Text():
         self._clean = clean
         self._filters = filters
         self._vocab = FreqDist() # Counter()  # all unique normalized words from the text
-        
+        self._nwords = 0
         self.verbose = verbose
+        self._iter = self.__sents__()
         
         if inplace:
-            list(self.__sents__())  
+            list(self._iter)  
             
  
     def __sents__(self):
         if self._prep:
-            stream = Stream(self._input,encoding=self._encoding)
-            for num,sent in enumerate(
-                    stream(self._prep.sentencizer, self._clean)
-                ):
-                
-                tagged_sent = TaggedSentence(sent,num,self._prep,self._filters)    
-                lemmas = tagged_sent.lemmas()
-                # в этот словарь попадают все леммы, так как здесь ничего не фильтруется
-                self._vocab += FreqDist(lemmas) 
-                self._sents.append(tagged_sent)
-                #self._words.extend(tagged_sent.words())
-                
-                yield tagged_sent
+            encoding=self._encoding
+            sentencizer = self._prep.sentencizer
+            clean = self._clean
+            path = self._input
+            
         else:
             path = datapath(self._path,self._datadir,".txt").full
+            encoding='utf-8'
+            sentencizer = None
+            clean = None
+            
             if not os.path.exists(path):
                 raise FileNotFoundError(path)
+        
+        stream = Stream(path, encoding=encoding)
+        for num,sent in enumerate(stream(sentencizer,clean)):
+            tagged_sent = TaggedSentence(
+                    sent.strip(),
+                    num,
+                    self._prep,
+                    self._filters
+            )    
+            lemmas = tagged_sent.lemmas()
+            # в этот словарь попадают все леммы, так как здесь ничего не фильтруется
+            self._vocab += FreqDist(lemmas) 
+            self._nwords += tagged_sent.nwords
+            self._sents.append(tagged_sent)
+            #self._words.extend(tagged_sent.words())
             
-            yield from self.load()
-    
+            yield tagged_sent
+            
+            
+            
     @property
     def vocab(self):
         return self._vocab
@@ -558,7 +575,7 @@ class Text():
     
     @property
     def nwords(self):
-        return len(self.words(filtrate=False))
+        return self._nwords
     
     @property
     def nlemmas(self):
@@ -586,23 +603,28 @@ class Text():
                     res = self._sents
         return res
     
-    def words(self, filtrate=True, lower=True):
+    def words(self, filtrate=True, lower=True, uniq=False):
         result = []
         for sent in self._sents:
             tokens = sent.tokens(filtrate=filtrate,lower=lower)
             words = [token.token for token in tokens]
             result.extend(words)
+        if uniq:
+            result = list(set(result))
+        
         return result
     
-    def lemmas(self, filtrate=True, lower=True):
+    def lemmas(self, filtrate=True, lower=True, uniq=False):
         result = []
         for sent in self._sents:
             tokens = sent.tokens(filtrate=filtrate,lower=lower)
             words = [token.lemma for token in tokens]
             result.extend(words)
+        if uniq:
+            result = list(set(result))
+        
         return result
 
-     
     def postags(self, pos=None, universal_tagset=False, ret_cond=True):
         
         def merge(tags):
@@ -665,10 +687,14 @@ class Text():
     def collocations(self):
         pass
     
-    def hapaxes(self,n=-1):
-        return self._vocab.hapaxes()[:n]
+    def hapaxes(self, words=False, filtrate=False):
+        if not words:
+            res = self._vocab
+        else:
+            res = FreqDist(self.words(filtrate=filtrate))
+        return res.hapaxes()
   
-    
+    '''
     def save(self, path=None, format=("txt","dawg")):
         path = path or datapath(self._path).short
         
@@ -685,53 +711,13 @@ class Text():
                ]
                self.dawg = dawg.IntCompletionDAWG(data)   
                self.dawg.save('{}.dawg'.format(path))
-    
-    
-    def load(self, path=None, format=("txt","dawg")):
-        
-        path = path or datapath(self._path).short
-        if not isinstance(format,(tuple,list)):
-            format = (format,)
-        
-        for fmt in format:
-            if fmt == "txt":
-                fullpath = '{}.txt'.format(path)
-                with open(fullpath,'r', encoding='utf8') as fd:
-                    
-                    for n,line in enumerate(fd):
-                        tagged_sent = TaggedSentence(
-                                            line.strip(),n,
-                                            filters=self._filters
-                                )
-                        lemmas = tagged_sent.lemmas()
-                        self._vocab += FreqDist(lemmas)
-                        self._sents.append(tagged_sent)
-                        yield tagged_sent
-            
-            if fmt =='dawg':
-                if not os.path.exists('{}.dawg'.format(path)):
-                    return
-                
-                self.dawg = dawg.IntCompletionDAWG()   
-                self.dawg.load('{}.dawg'.format(path))   
-               
-                if not self._sents:
-                    sents = sorted(self.dawg.items(),key=lambda t:t[1])
-                    tagged_sent = TaggedSentence(
-                                        line.strip(),n,
-                                        filters=self._filters
-                                    )
-                    lemmas = tagged_sent.lemmas()
-                    self._vocab += Counter(lemmas)
-                    self._sents.append(tagged_sent)
-                    yield tagged_sent
-
+    '''
     
     def __iter__(self):
-        return self.__sents__()
+        return self._iter
     
     def __next__(self):
-        return next(self.__sents__())
+        return next(self._iter)
      
     def __str__(self):
         return '\n'.join([str(sent) for sent in self.sents()])
@@ -739,7 +725,7 @@ class Text():
     def __repr__(self):
         fmt = "Text(\n\tname='{}',\n\tnsents={},\n\tnwords={},\n\tnlemmas={}\n)"
         return fmt.format(
-            self.filename, 
+            self.name, 
             self.nsents, 
             self.nwords, 
             self.nlemmas
@@ -806,41 +792,49 @@ class TaggedSentence():
         sent = self.untagging(self._sent)
         return ' '.join(chunk[0] for chunk in sent)
     
-    def words(self, lower=True, pos=None):
+    def words(self, lower=True, pos=None, uniq=False):
         sent = self.untagging(self._sent)
         lower = str.lower if lower else lambda s: s
         
         if isinstance(pos,set):
-            res = tuple(lower(chunk[0]) 
+            res = [lower(chunk[0]) 
                     for chunk in sent if chunk[1] in pos
-            )
+            ]
         elif isinstance(pos,str):
-            res = tuple(lower(chunk[0]) 
+            res = [lower(chunk[0]) 
                     for chunk in sent if chunk[1].startswith(pos) 
-            )   
+            ]   
         else:
-            res = tuple(lower(chunk[0]) for chunk in sent)
-        return res
+            res = [lower(chunk[0]) for chunk in sent]
+        
+        if uniq:
+            res = set(res)
+        
+        return tuple(res)
         
     def pos(self):
         sent = self.untagging(self._sent)
         return tuple(chunk[1] for chunk in sent)
     
-    def lemmas(self, lower=True, pos=None):
+    def lemmas(self, lower=True, pos=None, uniq=False):
         sent = self.untagging(self._sent)
         lower = str.lower if lower else lambda s: s
         
         if isinstance(pos,set):
-            res = tuple(lower(chunk[2]) 
+            res = [lower(chunk[2]) 
                     for chunk in sent if chunk[1] in pos
-            )
+            ]
         elif isinstance(pos,str):
-            res = tuple(lower(chunk[2]) 
+            res = [lower(chunk[2]) 
                     for chunk in sent if chunk[1].startswith(pos) 
-            )   
+            ]  
         else:
-            res = tuple(lower(chunk[2]) for chunk in sent)
-        return res
+            res = [lower(chunk[2]) for chunk in sent]
+        
+        if uniq:
+            res = set(res)
+        
+        return tuple(res)
         
     def tokens(self, filtrate=False, **kwargs):
         sent = self.untagging(self._sent)
