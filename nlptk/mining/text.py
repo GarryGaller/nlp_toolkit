@@ -5,6 +5,8 @@ import dawg
 import pickle
 import math
 import time
+import heapq
+
 import nltk
 from nltk import FreqDist, ConditionalFreqDist
 
@@ -375,25 +377,32 @@ class Corpus():
          return self._vocab.hapaxes(n_doc)
     
     
-    def tf(self, n_doc, token=None, sort=False):
+    def tf(self, n_doc, token=None, sort=False, top=0):
         if token:
             return self._vocab.tf(n_doc,token)
-        
-        return self._sort(self._vocab.tf(n_doc),sort) 
+        if top:
+            res = self._top(self._vocab.tf(n_doc), top)    
+        else:
+            res = self._sort(self._vocab.tf(n_doc), sort) 
+        return res
     
     
-    def idf(self, token=None, sort=False):
+    def idf(self, token=None, sort=False, top=0):
         if token:
             return self._vocab.idf(token)
-        
-        return self._sort(self._vocab.idf(),sort) 
+        if top:
+            res = self._top(self._vocab.idf(), top) 
+        else:
+            res = self._sort(self._vocab.idf(), sort)
+        return res  
     
 
     def tfidf(self, 
         n_doc, 
         token=None,
         texts:List[List[str]]=[], 
-        sort=False
+        sort=False,
+        top=0
         ):
         if texts:
             self._vocab.compute_tfidf(
@@ -403,28 +412,44 @@ class Corpus():
         
         if token:
             return self._vocab.tfidf(n_doc,token)
-        return self._sort(self._vocab.tfidf(n_doc),sort) 
+        if top:
+            res = self._top(self._vocab.tfidf(n_doc), top) 
+        else:
+            res = self._sort(self._vocab.tfidf(n_doc), sort)
+        return res 
           
         
-    def cfs(self, n_doc, token=None, sort=False):
+    def cfs(self, n_doc, token=None, sort=False, top=0):
         if token:
             return self._vocab.cfs(n_doc,token)
-        return self._sort(self._vocab.cfs(n_doc),sort) 
-           
+        if top:    
+            res = self._top(self._vocab.cfs(n_doc), top)
+        else:
+            res = self._sort(self._vocab.cfs(n_doc),sort) 
+        return res   
     
-    def ccfs(self, token=None, sort=False):
+    
+    def ccfs(self, token=None, sort=False, top=0):
         if token:
             return self._vocab.ccfs(token)
-        return self._sort(self._vocab.ccfs(),sort) 
+        if top:    
+            res = self._top(self._vocab.ccfs(), top)
+        else:
+            res = self._sort(self._vocab.ccfs(), sort) 
+        return res
     
     
-    def dfs(self, token=None, sort=False):
+    def dfs(self, token=None, sort=False, top=0):
         if token:
             return self._vocab.dfs(token)
-        return self._sort(self._vocab.dfs(),sort)  
+        if top:    
+            res = self._top(self._vocab.dfs(), top)
+        else:
+            res = self._sort(self._vocab.dfs(), sort)
+        return res  
         
     
-    def _sort(self,obj,typ):
+    def _sort(self, obj, typ):
         if typ == 1:
             res = sorted(obj.items(),key=lambda t:t[1])
         elif typ == -1:
@@ -432,6 +457,15 @@ class Corpus():
         else:
             res = obj     
         return res
+    
+    
+    def _top(self, obj, n):
+        if n > 0:
+            res = heapq.nlargest(n, obj, key=obj.get)   
+        else:
+            res = heapq.nsmallest(abs(n), obj, key=obj.get)
+        return res    
+            
     
     '''
     def save(self):
@@ -889,30 +923,25 @@ class Token():
         )
     
 
-MODULEDIR = os.path.abspath(os.path.dirname(nlptk.__file__))
+
 #------------------------------------------------------------------------------#
 # tests
 #------------------------------------------------------------------------------#
 if __name__ == "__main__":
     
+    source = os.path.abspath(os.path.join(nlptk.MODULEDIR,r'corpus\en'))
+    APPDIR = os.path.abspath(os.path.dirname(__file__))
     
-    #APPDIR = os.path.abspath(os.path.dirname(__file__))
-    text = '''
-    "It is farther on," said I; "but observe the white web-work which gleams from these cavern walls."
-
-He turned towards me, and looked into my eyes with two filmy orbs that distilled the rheum of intoxication. "Nitre?" he asked, at length.
-
-"Nitre," I replied. "How long have you had that cough?" "Ugh! ugh! ugh!--ugh! ugh! ugh!--ugh! ugh! ugh!--ugh! ugh! ugh!--ugh! ugh! ugh!"
-
-My poor friend found it impossible to reply for many minutes.
-
-"It is nothing," he said, at last.'''
-    
+    intake = '''
+    Squire Trelawney, Doctor Livesey, and the rest of these gentlemen having
+asked me to write down the whole particulars about Treasure Island, from
+the beginning to the end, keeping nothing back but the bearings of the
+island, and that only because there is still treasure not yet lifted, I
+take up my pen in the year of grace 17--, and go back to the time when
+my father kept the "Admiral Benbow" Inn, and the brown old seaman, with
+the saber cut, first took up his lodging under our roof.'''
     
     
-    APPDIR =  os.path.dirname(__file__)
-    source = os.path.abspath(os.path.join(MODULEDIR,r'corpus\en'))
- 
     prep = Prep()
     rules_clean=OrderedDict(
         roman_numerals=(True,)
@@ -933,119 +962,39 @@ My poor friend found it impossible to reply for many minutes.
     #print(text)
     #print(filters(text.split()))
     
-    
-    #for path in Path(source,"*.txt"):
-    intake = os.path.join(MODULEDIR,r'corpus\test\1.txt')
-    inp = 'filename'
+    #intake = os.path.join(nlptk.MODULEDIR,r'corpus\test\1.txt')
+    #inp = 'filename'
     #intake = 'hello world'
-    #inp='text'
+    inp='text'
     #intake = sys.stdin
     #inp = 'file'
     text = Text(intake, prep=prep, clean=clean, filters=filters, input=inp)
     print(list(text))
     print(text)
-    print(repr(text))
-    quit()
-    
-    
-    
-    start_line = time.time()
-    corpus = Corpus(Path(source,"*.txt"), prep, clean, filters)
-    
-    corpus.verbose = True
-    print(repr(corpus))
-    quit()
-    
-    for text in corpus:    
-       
-        for i,sent in enumerate(text):
-            '''
-            print(sent.raw())
-            print(sent)
-            print()
-            print(sent.words())
-            print()
-            print(sent.lemmas())
-            print()
-            print(sent.tokens(lower=True))
-            print()
-            print(sent.tokens(filtrate=True))
-            
-            input("next >>")      
-            '''
-            pass
-           
-            
-        '''
-        print(repr(text))
-        
-        words = text.words(filtrate=False)
-        print(len(words))
-        print(words[:10])
-        words = text.words()
-        print(len(words))
-        print(words[:10])
-        print(len(text._vocab))
-        print(text._vocab.most_common(10))
-        print(text.hapaxes())
-        cfd, cond = text.postags()
-        verb = cfd['VB']
-        print(verb)
-        print(verb.most_common(10))
-        noun = cfd['NN']
-        print(noun)
-        print(noun.most_common(10))
-        noun, _ = text.postags('NOUN')
-        print(noun)
-        print(noun.most_common(10))
-        verb, _ = text.postags('VERB')
-        print(verb)
-        print(verb.most_common(10))
-        print(cond)
-        
-        #pprint(list(islice(text.ngrams(3),10)))
-        #pprint(list(islice(text.skipgrams(3,2),10)))
-        input(">>")
-        '''
-      
-    
-            
-        
-    #input("--tfidf--")    
-    #pprint(corpus.tfidf(0))
-    print(corpus.cfs(1,'rochester'))
-    print(sum(corpus.cfs(1).values()))
-    print(corpus.dfs('rochester'))
-    print(corpus.tf(1,'rochester'))
-    print(corpus.idf('rochester'))
-    
-    input("--cfc--")
-    pprint(corpus.cfs(0,sort=-1)[:10])
-    input("--ccfc--")
-    pprint(corpus.ccfs(sort=-1)[:10])
-    input("--dfc--")
-    pprint(corpus.dfs(sort=-1)[:50])
-    input("--tfidf--")
-    
-    for n in range(corpus.ndocs):
-        pprint(corpus.tfidf(n,sort=-1)[:10]) 
-    
-    
     '''
-    He/PPS/He prided/VBD/prided himself/PPL/himself on/IN/on his/PP$/his connoisseurship/NN/connoisseurship in/IN/in wine/NN/wine
-    ("[Token(token='prided', idx=1, pos='VBD', lemma='prided', nsent=8), "
-     "Token(token='connoisseurship', idx=5, pos='NN', lemma='connoisseurship', "
-     "nsent=8), Token(token='wine', idx=7, pos='NN', lemma='wine', nsent=8)]")
-    
-    Few/AP/Few Italians/NPS/Italians have/HV/have the/AT/the true/JJ/true virtuoso/NN/virtuoso spirit/NN/spirit
-    ("[Token(token='Italians', idx=1, pos='NPS', lemma='Italians', nsent=9), "
-     "Token(token='true', idx=4, pos='JJ', lemma='true', nsent=9), "
-     "Token(token='virtuoso', idx=5, pos='NN', lemma='virtuoso', nsent=9), "
-     "Token(token='spirit', idx=6, pos='NN', lemma='spirit', nsent=9)]")
-    
-    # все теги частей речи, которые text.postags() возвращает в переменную cond из ConditionalFreqDist().conditions()
-    ['NNPS', 'EX', 'WP', 'VBN', 'MD', 'VBP', 'VBD', 'WP$', 'JJS', 'JJR', 'PRP',
-    'PRP$', 'NNS', 'VBG', 'TO', 'VB', 'UH', 'FW', 'JJ', 'CC', 'RP', 'POS', 
-    'PDT', 'CD', 'WDT', 'WRB', 'NN', 'VBZ', 'RBS', 'IN', 'DT', 'RB', 'RBR', 'NNP'
-    ]
+    Squire⁄NNP⁄Squire Trelawney⁄NNP⁄Trelawney Doctor⁄NNP⁄Doctor Livesey⁄NNP⁄Livesey 
+    and⁄CC⁄and the⁄DT⁄the rest⁄NN⁄rest of⁄IN⁄of these⁄DT⁄these gentlemen⁄NNS⁄gentleman 
+    having⁄VBG⁄have asked⁄VBD⁄ask me⁄PRP⁄me to⁄TO⁄to write⁄VB⁄write down⁄RP⁄down 
+    the⁄DT⁄the whole⁄JJ⁄whole particulars⁄NNS⁄particular about⁄IN⁄about Treasure⁄NNP⁄Treasure 
+    Island⁄NNP⁄Island from⁄IN⁄from the⁄DT⁄the beginning⁄NN⁄beginning to⁄TO
+    ⁄to the⁄DT⁄the end⁄NN⁄end keeping⁄VBG⁄keep nothing⁄NN⁄nothing back⁄RB⁄back 
+    but⁄CC⁄but the⁄DT⁄the bearings⁄NNS⁄bearing of⁄IN⁄of the⁄DT⁄the island⁄NN⁄island 
+    and⁄CC⁄and that⁄IN⁄that only⁄RB⁄only because⁄IN⁄because there⁄EX⁄there is⁄VBZ⁄be 
+    still⁄RB⁄still treasure⁄JJ⁄treasure not⁄RB⁄not yet⁄RB⁄yet lifted⁄VBN⁄lift I⁄PRP⁄I 
+    take⁄VBP⁄take up⁄RP⁄up my⁄PRP$⁄my pen⁄NN⁄pen in⁄IN⁄in the⁄DT⁄the year⁄NN⁄year of⁄I
+    N⁄of grace⁄NN⁄grace and⁄CC⁄and go⁄VB⁄go back⁄RB⁄back to⁄TO⁄to the⁄DT⁄the 
+    time⁄NN⁄time when⁄WRB⁄when my⁄PRP$⁄my father⁄NN⁄father kept⁄VBD⁄keep the⁄DT⁄the 
+    Admiral⁄NNP⁄Admiral Benbow⁄NNP⁄Benbow Inn⁄NNP⁄Inn and⁄CC⁄and the⁄DT⁄the brown⁄JJ⁄brown 
+    old⁄JJ⁄old seaman⁄NN⁄seaman with⁄IN⁄with the⁄DT⁄the saber⁄NN⁄saber cut⁄NN⁄cut 
+    first⁄RB⁄first took⁄VBD⁄take up⁄RP⁄up his⁄PRP$⁄his lodging⁄VBG⁄lodge under⁄IN⁄unde
+    r our⁄PRP$⁄our roof⁄NN⁄roof
+    '''
+    print(repr(text))
+    '''
+    Text(
+            name='StringIO',
+            nsents=1,
+            nwords=89,
+            nlemmas=65
+    )
     '''

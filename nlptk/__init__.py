@@ -1,6 +1,4 @@
 
 
-#from .patterns import patterns
-#from .mixins import mixins
-#from .summarization import summarizer
-#from .postagging import taggers
+import os
+MODULEDIR = os.path.abspath(os.path.dirname(__file__))
