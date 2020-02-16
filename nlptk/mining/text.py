@@ -22,6 +22,8 @@ from itertools import islice
 import nlptk
 from nlptk.mining.utils import chardetector, datapath
 from nlptk.mining.vocab import Vocabulary
+from nlptk.ratings.rake.rake import Rake
+from nlptk.ratings.textrank.textrank import TextRank
 from nlptk.misc.mixins import (
                 StripperMixin,
                 RemoverMixin,
@@ -311,11 +313,11 @@ class Corpus():
                 ):
                 prep, clean,filters = self._prep, self._clean, self._filters 
                 if self.verbose:
-                    print('creating: ', dtxt.replace(MODULEDIR,'..'))
+                    print('creating: ', dtxt.replace(nlptk.MODULEDIR,'..'))
             else:
                 prep, clean, filters = None,None, self._filters 
                 if self.verbose:
-                    print('reading:  ', dtxt.replace(MODULEDIR,'..'))
+                    print('reading:  ', dtxt.replace(nlptk.MODULEDIR,'..'))
                 
             if self.verbose:
                 start = time.time()
@@ -581,6 +583,7 @@ class Text():
                 raise FileNotFoundError(path)
         
         stream = Stream(path, encoding=encoding)
+        self.encoding = stream._encoding
         for num,sent in enumerate(stream(sentencizer,clean)):
             tagged_sent = TaggedSentence(
                     sent.strip(),
@@ -602,6 +605,9 @@ class Text():
     @property
     def vocab(self):
         return self._vocab
+    
+    def encoding():
+        stream
     
     @property
     def nsents(self):
@@ -641,7 +647,7 @@ class Text():
         result = []
         for sent in self._sents:
             tokens = sent.tokens(filtrate=filtrate,lower=lower)
-            words = [token.token for token in tokens]
+            words = [token.word for token in tokens]
             result.extend(words)
         if uniq:
             result = list(set(result))
@@ -659,7 +665,7 @@ class Text():
         
         return result
 
-    def postags(self, pos=None, universal_tagset=False, ret_cond=True):
+    def postags(self, pos=None, universal_tagset=False, ret_cond=False):
         
         def merge(tags):
             result = FreqDist()
@@ -709,6 +715,82 @@ class Text():
         return tags
     '''
     
+    def prefix(self, affix):
+        '''Поиск по префиксному дереву'''
+        pass
+    
+    def suffix(self, affix):
+        '''Поиск по суффиксному дереву'''
+        pass
+    
+    def stats(self):
+        '''Всевозможная статистика по тексту'''
+        pass
+    
+    def count(self, by='words', pos=None, uniq=None):
+        
+        result = 0
+        for sent in self._sents:
+            if by == 'lemmas':
+                tokens = sent.lemmas(pos=pos,uniq=uniq)
+            elif by == 'words':
+                tokens = sent.words(pos=pos,uniq=uniq)
+            result += len(tokens)
+      
+        return result
+    
+    def keywords(self,
+            by='words',
+            rating=('rake', dict(
+                    max_words=4,
+                    stopwords=nltk.corpus.stopwords.words('english')
+                    )
+                )
+            ):
+        
+        sents = []
+        
+        for sent in self._sents:
+            tokens = sent.words() if by == 'words' else sent.lemmas()  
+            sents.append(tokens)
+        
+        if rating[0] == 'rake':
+            rake = Rake(
+                sents,
+                **rating[1]
+            )
+            result = rake
+        
+        elif rating[0] == 'textrank':
+            # нереализовано, так как ииспользуемый класс TextRank 
+            # создает оценки только для предложений
+            pass
+        
+        return result
+    
+    # на построение графа в TextRank уходит много памяти для больших текстов 
+    # (> 20 тысяч словоупотреблений)!
+    def summarize(self, top=7, scores=True):
+        
+        words =  [set(sent.lemmas(uniq=True)) for sent in self.sents()]
+        textrank = TextRank(words,self.nsents)    
+        
+        if top:
+            result = textrank.topn(n=top)
+            if scores:
+                result = [
+                    (score,self._sents[idx].raw) for idx,score in  result
+                ] 
+            else:
+                result = [
+                    self._sents[idx].raw for idx,score in result
+                ]        
+        
+        else:
+            result = textrank
+        
+        return result
+    
     def doc2bow(self):
         pass
     
@@ -757,9 +839,12 @@ class Text():
         return '\n'.join([str(sent) for sent in self.sents()])
     
     def __repr__(self):
-        fmt = "Text(\n\tname='{}',\n\tnsents={},\n\tnwords={},\n\tnlemmas={}\n)"
+        fmt = ("Text(\n\tname='{}',\n\tencoding='{}',\n\t"
+            "nsents={},\n\tnwords={},\n\tnlemmas={}\n)"
+        )
         return fmt.format(
             self.name, 
+            self.encoding,
             self.nsents, 
             self.nwords, 
             self.nlemmas
@@ -770,7 +855,7 @@ class TaggedSentence():
     # \u2215 - знак деления
     # \u2044  дробная наклонная черта
     def __init__(self, sent, num, prep=None, filters=None, delim='\u2044'):
-        self.raw_sent = sent    
+        #self.raw_sent = sent    
         self._n = num
         self._delim = delim
         self._prep = prep
@@ -821,10 +906,14 @@ class TaggedSentence():
     def nwords(self):
        return self._nwords
        
-    
+    @property
     def raw(self):
         sent = self.untagging(self._sent)
         return ' '.join(chunk[0] for chunk in sent)
+    
+    @property
+    def text(self):
+        return self._sent
     
     def words(self, lower=True, pos=None, uniq=False):
         sent = self.untagging(self._sent)
@@ -882,6 +971,19 @@ class TaggedSentence():
     
         return tuple(result)   
     
+    def count(self, by='words', pos=None, uniq=None):
+        
+        result = 0
+       
+        if by == 'lemmas':
+            tokens = self.lemmas(pos=pos,uniq=uniq)
+        elif by == 'words':
+            tokens = self.words(pos=pos,uniq=uniq)
+        result = len(tokens)
+      
+        return result
+    
+
     def __str__(self):
         return self._sent
 
@@ -899,7 +1001,7 @@ class Token():
         else:
             lower = str.lower
         
-        self.token = lower(token)
+        self.word = lower(token)
         self.pos = pos
         self.lemma = lower(lemma)
         self.nsent = nsent
@@ -911,11 +1013,11 @@ class Token():
         
     def __repr__(self):
         fmt = (
-            "Token(token='{token}', idx={idx}, "
+            "Token(word='{word}', idx={idx}, "
             "pos='{pos}', lemma='{lemma}', nsent={nsent})"
         )
         return fmt.format(
-            token=self.token,
+            word=self.word,
             idx=self.idx,
             pos=self.pos,
             lemma=self.lemma,

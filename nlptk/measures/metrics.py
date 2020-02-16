@@ -30,13 +30,20 @@ class MeasuresAssociation():
         '''
     
     @staticmethod
-    def mi(cn_freq,n_freq,c_freq,total):
+    def pmi(cn_freq,n_freq,c_freq,total):
+        '''Pointwise mutual information'''
         # c_freq  -  частота встречаемости коллоката
         # n_freq  -  частота встречаемости главного слова
         # cn_freq -  частота совместной встречаемости ключевого слова в паре с коллокатом: то есть это число повторов биграммы в списке всех биграмм
         # total   -  общее число слов в тексте
         res = (cn_freq * total) / (n_freq * c_freq) 
         return math.log(res,2.0)
+    
+    @staticmethod
+    def ppmi(cn_freq,n_freq,c_freq,total):
+        '''Positive PMI'''
+        res = max(0,Metrics.pmi(cn_freq,n_freq,c_freq,total)) 
+        return res
     
     #----------------------------------------#
     # Эвристическая мера MI3 увеличивает вес частоты совместной встречаемости в числителе, что не даёт MI завышать значения для низкочастотных сочетаний. 
@@ -54,7 +61,7 @@ class MeasuresAssociation():
     #----------------------------------------#
     @staticmethod
     def salience(cn_freq,n_freq,c_freq,total):
-        res = Metrics.mi(cn_freq,n_freq,c_freq,total) * math.log(cn_freq + 1)
+        res = Metrics.pmi(cn_freq,n_freq,c_freq,total) * math.log(cn_freq + 1)
         return res  
     
     #----------------------------------------#

@@ -57,6 +57,19 @@ class SentencizerMixin():
                 yield sent 
     
     @staticmethod
+    def sentencize_nltk_ru(text, *args, lang="russian", **kwargs):
+        '''сегментация текста на предложения'''
+        
+        SENTENCE_TOKENIZER = nltk.data.load('tokenizers/punkt/%s.pickle' % lang)
+        #nltk.sent_tokenize(text, language=lang)
+        min_len = kwargs.get('min_len',2)
+        for  sent in SENTENCE_TOKENIZER.tokenize(text):  
+            sent = sent.strip(string.punctuation)
+            if len(sent) >= min_len:
+                yield sent 
+    
+    
+    @staticmethod
     def sentencize_razdel(text, *args, **kwargs):
         '''сегментация текста на предложения'''
                              
@@ -575,7 +588,7 @@ class RemoverMixin():
         result = []
         
         for token in tokens: 
-            tok = token.token if hasattr(token,'token') else token
+            tok = token.word if hasattr(token,'word') else token
             if tok not in chars:
                 result.append(token)  
         return result
@@ -600,8 +613,8 @@ class RemoverMixin():
         result = []
         
         for token in tokens: 
-            if hasattr(token,'token'):
-                token.token = token.token.strip(chars)
+            if hasattr(token,'word'):
+                token.word = token.word.strip(chars)
             else:
                 token = token.strip(chars)
             result.append(token)  
@@ -713,7 +726,7 @@ class FilterMixin():
     @staticmethod  
     def isnot_proper_name2(token):
         indexes = token.indexes
-        token_ = token.token if hasattr(token,'token') else token
+        token_ = token.word if hasattr(token,'word') else token
         result = not (token_[0].isupper() and  0 not in indexes)
         #if not result:
         #    print(repr(token), result)

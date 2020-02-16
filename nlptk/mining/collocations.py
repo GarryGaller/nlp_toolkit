@@ -4,7 +4,8 @@ from nlptk.measures.metrics import MeasuresAssociation
 class Collocate():
     
     method = {
-            'mi':MeasuresAssociation.mi,
+            'pmi':MeasuresAssociation.pmi,
+            'ppmi':MeasuresAssociation.ppmi,
             'student':MeasuresAssociation.t_score,
             't-score':MeasuresAssociation.t_score,
             'z_score':MeasuresAssociation.z_score,
