@@ -1,4 +1,8 @@
 *.pdf
+mining/data
+*.pickle
+*.txt
+*.dawg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

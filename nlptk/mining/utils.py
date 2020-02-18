@@ -1,5 +1,25 @@
+
 import os,sys
+import heapq
 from chardet.universaldetector import UniversalDetector
+
+
+def _sort(obj, typ):
+    if typ == 1:
+        res = sorted(obj.items(),key=lambda t:t[1])
+    elif typ == -1:
+        res = sorted(obj.items(),key=lambda t:-t[1])
+    else:
+        res = obj     
+    return res
+
+
+def _top(obj, n):
+    if n > 0:
+        res = heapq.nlargest(n, obj, key=obj.get)   
+    else:
+        res = heapq.nsmallest(abs(n), obj, key=obj.get)
+    return res 
 
 
 def get_feats(tokens):

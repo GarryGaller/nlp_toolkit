@@ -20,7 +20,7 @@ from collections import OrderedDict
 from itertools import islice
 #from docx import Document
 import nlptk
-from nlptk.mining.utils import chardetector, datapath
+from nlptk.mining.utils import chardetector, datapath, _sort, _top
 from nlptk.mining.vocab import Vocabulary
 from nlptk.ratings.rake.rake import Rake
 from nlptk.ratings.textrank.textrank import TextRank
@@ -229,7 +229,14 @@ class Path():
         return next(self._iter)
 
 
+class Loader():
+    pass
 
+
+class Saver():
+    pass
+    
+    
 class Stream():
     '''
     >>> lines = Stream(path)
@@ -285,8 +292,19 @@ class Corpus():
             verbose=False,
             autosave=True, 
             filtrate=False,
+            loadas="pickle",
+            saveas=("txt","pickle"),
             rewrite=False
         ):
+        
+        self.autosave = autosave
+        self.verbose = verbose
+        self.rewrite = rewrite
+        self.loadas = loadas
+        self.saveas = saveas
+        self.filtrate = filtrate
+        self.name = 'corpus'
+        
         self._inputs = inputs
         self._paths = []
         self._datadir = datadir
@@ -295,38 +313,43 @@ class Corpus():
         self._clean = clean
         self._filters = filters
         self._vocab = Vocabulary()
-        self.autosave = autosave
-        self.verbose = verbose
-        self.rewrite = rewrite
-        self.filtrate = filtrate
-        self.name = 'corpus'
         self._iter = self.__texts__()
     
     def __texts__(self):
         
+        width = 16
         for path in self._inputs:
             self._paths.append(path)
-            dtxt = datapath(path, ext=".txt").full
-            ddawg = datapath(path, ext=".dawg").full
-            if self.rewrite or (
-                not os.path.exists(dtxt)
-                ):
-                prep, clean,filters = self._prep, self._clean, self._filters 
-                if self.verbose:
-                    print('creating: ', dtxt.replace(nlptk.MODULEDIR,'..'))
-            else:
-                prep, clean, filters = None,None, self._filters 
-                if self.verbose:
-                    print('reading:  ', dtxt.replace(nlptk.MODULEDIR,'..'))
-                
+            txt = datapath(path, ext=".tagged.txt").full
+            pick = datapath(path, ext=".sents.pickle").full
+            trie = datapath(path, ext=".trie.dawg").full
+            process = 'reading:'.ljust(width)
+            
+            if not (
+                  os.path.exists(txt)  or 
+                  os.path.exists(pick) or
+                  os.path.exists(trie) 
+                )  or self.rewrite:   
+                process = 'creating:'.ljust(width)
+            
+            if self.verbose:
+                print(process, txt.replace(nlptk.MODULEDIR,'..'))
+            
+            
             if self.verbose:
                 start = time.time()
-            
-            text = Text(path, prep, clean, filters, inplace=True)
+            # быстрее всего читать sents и vocab текстов из pickle
+            # чем из tagged.txt
+            text = Text(path, 
+                        self._prep, self._clean, self._filters,
+                        loadas=self.loadas, 
+                        saveas=self.saveas,
+                        inplace=True
+            )
             
             if self.verbose:
-                print('elapsed:  ',time.time() - start)
-            
+                print('time:'.ljust(width),time.time() - start)
+            # обе операции в среднем занимают 1сек
             words = text.words(filtrate=self.filtrate) # не фильтруем?
             self._vocab += Vocabulary(words)
             
@@ -334,13 +357,13 @@ class Corpus():
                 wraptext = shorten(
                     str(words[:10]), width=80, placeholder="...]"
                 )
-                print('vocab:', wraptext)
-                print('add vocab:',time.time() - start)
+                print('add vocab:'.ljust(width), wraptext)
+                print('TOTAL TIME:'.ljust(width),time.time() - start)
             
-            if self.autosave and (self.rewrite or not os.path.exists(dtxt)): 
-                text.save(format="txt")
+            if self.autosave and 'creating' in process: 
+                text.save(as_=self.saveas)
                 if self.verbose:
-                    print('saving:   ', time.time() - start)
+                    print('TOTAL TIME:'.ljust(width), time.time() - start)
             #self._texts.append(text)
             
             yield text
@@ -383,9 +406,9 @@ class Corpus():
         if token:
             return self._vocab.tf(n_doc,token)
         if top:
-            res = self._top(self._vocab.tf(n_doc), top)    
+            res = _top(self._vocab.tf(n_doc), top)    
         else:
-            res = self._sort(self._vocab.tf(n_doc), sort) 
+            res = _sort(self._vocab.tf(n_doc), sort) 
         return res
     
     
@@ -393,9 +416,9 @@ class Corpus():
         if token:
             return self._vocab.idf(token)
         if top:
-            res = self._top(self._vocab.idf(), top) 
+            res = _top(self._vocab.idf(), top) 
         else:
-            res = self._sort(self._vocab.idf(), sort)
+            res = _sort(self._vocab.idf(), sort)
         return res  
     
 
@@ -415,9 +438,9 @@ class Corpus():
         if token:
             return self._vocab.tfidf(n_doc,token)
         if top:
-            res = self._top(self._vocab.tfidf(n_doc), top) 
+            res = _top(self._vocab.tfidf(n_doc), top) 
         else:
-            res = self._sort(self._vocab.tfidf(n_doc), sort)
+            res = _sort(self._vocab.tfidf(n_doc), sort)
         return res 
           
         
@@ -425,9 +448,9 @@ class Corpus():
         if token:
             return self._vocab.cfs(n_doc,token)
         if top:    
-            res = self._top(self._vocab.cfs(n_doc), top)
+            res = _top(self._vocab.cfs(n_doc), top)
         else:
-            res = self._sort(self._vocab.cfs(n_doc),sort) 
+            res = _sort(self._vocab.cfs(n_doc),sort) 
         return res   
     
     
@@ -435,9 +458,9 @@ class Corpus():
         if token:
             return self._vocab.ccfs(token)
         if top:    
-            res = self._top(self._vocab.ccfs(), top)
+            res = _top(self._vocab.ccfs(), top)
         else:
-            res = self._sort(self._vocab.ccfs(), sort) 
+            res = _sort(self._vocab.ccfs(), sort) 
         return res
     
     
@@ -445,30 +468,11 @@ class Corpus():
         if token:
             return self._vocab.dfs(token)
         if top:    
-            res = self._top(self._vocab.dfs(), top)
+            res = _top(self._vocab.dfs(), top)
         else:
-            res = self._sort(self._vocab.dfs(), sort)
+            res = _sort(self._vocab.dfs(), sort)
         return res  
         
-    
-    def _sort(self, obj, typ):
-        if typ == 1:
-            res = sorted(obj.items(),key=lambda t:t[1])
-        elif typ == -1:
-            res = sorted(obj.items(),key=lambda t:-t[1])
-        else:
-            res = obj     
-        return res
-    
-    
-    def _top(self, obj, n):
-        if n > 0:
-            res = heapq.nlargest(n, obj, key=obj.get)   
-        else:
-            res = heapq.nsmallest(abs(n), obj, key=obj.get)
-        return res    
-            
-    
     '''
     def save(self):
         path = datapath(self.name,self._datadir,".pickle").full
@@ -523,14 +527,27 @@ class Text():
                     datadir="data",
                     encoding=chardetector,
                     verbose=True,
+                    loadas="pickle", 
+                    saveas=("txt","pickle"),
                     input='filename' # str {'filename', 'file', 'text'}
         ):
         
         self._path = ''
         self.filename = '' 
         self.name = ''
+        self.inplace = inplace
+        self.verbose = verbose
+        self.loadas = loadas
+        self.saveas = saveas
+        self.encoding = 'unknown'
+        
+        self._datadir = datadir
         self._encoding = None
-
+        self._nwords = 0
+        self._sents = []
+        self._vocab = FreqDist()
+        self._trie = {}
+        
         if input == 'filename': 
             self._path = intake
             #self.filename = os.path.basename(os.path.splitext(self._path)[0])
@@ -538,6 +555,16 @@ class Text():
             self.name = os.path.splitext(self.filename)[0]
             self._encoding = encoding
             self._input = intake
+            
+            if self.loadas == 'pickle':
+                self._sents = self.loadpickle('sents')  or []         # all sentences from the text
+                self._vocab = self.loadpickle('vocab')  or FreqDist() # all unique normalized words from the text
+                # итеративная загрузка словаря идет несколько секунд идет, поэтому быстрее 
+                # (за доли секунды) прочитать его из pickle
+                #for sent in self._sents:
+                #    self._vocab += FreqDist(sent.lemmas()) 
+                
+                self._trie = self.loaddawg('trie') or {}              #  prefix tree
             
         elif input == "text":
             self._input = io.StringIO(intake)
@@ -551,36 +578,37 @@ class Text():
             self.filename = self._input.__class__.__name__ 
             self.name = self.filename
         
-        self._datadir = datadir
-        self._sents = []  # all sentences from the text
-        #self._words = [] # all words from the text
+        if self._sents:
+            self._nwords = sum(map(lambda s:s.nwords, self._sents))    
+        
         self._prep = prep
         self._clean = clean
         self._filters = filters
-        self._vocab = FreqDist() # Counter()  # all unique normalized words from the text
-        self._nwords = 0
-        self.verbose = verbose
+  
         self._iter = self.__sents__()
+        # close the generator if data is loaded
+        if self._sents:
+            self._iter.close()
         
-        if inplace:
-            list(self._iter)  
+        if self.inplace:
+            if not self._sents:
+                list(self._iter)  
             
  
+    
     def __sents__(self):
-        if self._prep:
-            encoding=self._encoding
-            sentencizer = self._prep.sentencizer
-            clean = self._clean
-            path = self._input
-            
-        else:
-            path = datapath(self._path,self._datadir,".txt").full
-            encoding='utf-8'
-            sentencizer = None
-            clean = None
-            
-            if not os.path.exists(path):
-                raise FileNotFoundError(path)
+        
+        encoding = self._encoding
+        sentencizer = self._prep.sentencizer
+        clean = self._clean
+        path = self._input
+        
+        if self.loadas == 'txt' and self._path:
+            path = datapath(self._path,self._datadir,".tagged.txt").full
+            if os.path.exists(path):
+                encoding='utf-8'
+                sentencizer = None
+                clean = None
         
         stream = Stream(path, encoding=encoding)
         self.encoding = stream._encoding
@@ -592,22 +620,35 @@ class Text():
                     self._filters
             )    
             lemmas = tagged_sent.lemmas()
-            # в этот словарь попадают все леммы, так как здесь ничего не фильтруется
+            # в этот словарь попадают все леммы, 
+            # так как здесь ничего не фильтруется
             self._vocab += FreqDist(lemmas) 
             self._nwords += tagged_sent.nwords
             self._sents.append(tagged_sent)
             #self._words.extend(tagged_sent.words())
             
             yield tagged_sent
+        
+        data = ((token.word,(token.nsent,token.idx)) 
+            for sent in self.sents()
+                for token in sent.tokens()
+        )
+        self._trie = dawg.RecordDAWG(">IH",data)  
             
-            
+    
+    
+    def trie(self, key=None, sort=True):
+        
+        if key is None:return self._trie
+        
+        res = self._trie[key]
+        if sort:
+            res.sort(key=lambda t:(t[0],[1]))
+        return res 
             
     @property
     def vocab(self):
         return self._vocab
-    
-    def encoding():
-        stream
     
     @property
     def nsents(self):
@@ -665,7 +706,13 @@ class Text():
         
         return result
 
-    def postags(self, pos=None, universal_tagset=False, ret_cond=False):
+    def postags(self, 
+            pos=None,
+            sort=False,
+            top=0, 
+            universal_tagset=False, 
+            ret_cond=False
+            ):
         
         def merge(tags):
             result = FreqDist()
@@ -695,6 +742,12 @@ class Text():
                 result = merge(maps[pos])
             else:
                 result = cfd[pos]
+        
+        if top:    
+            result = _top(result, top)
+        else:
+            result = _sort(result, sort) 
+        
         if ret_cond:    
             result = result, cond   
         
@@ -715,9 +768,9 @@ class Text():
         return tags
     '''
     
-    def prefix(self, affix):
+    def startswith(self, affix):
         '''Поиск по префиксному дереву'''
-        pass
+        return self._trie.keys(affix)
     
     def suffix(self, affix):
         '''Поиск по суффиксному дереву'''
@@ -727,12 +780,14 @@ class Text():
         '''Всевозможная статистика по тексту'''
         pass
     
+    # !!! неверно считаются уникальные
     def count(self, by='words', pos=None, uniq=None):
         
         result = 0
         for sent in self._sents:
             if by == 'lemmas':
                 tokens = sent.lemmas(pos=pos,uniq=uniq)
+                
             elif by == 'words':
                 tokens = sent.words(pos=pos,uniq=uniq)
             result += len(tokens)
@@ -809,25 +864,91 @@ class Text():
         else:
             res = FreqDist(self.words(filtrate=filtrate))
         return res.hapaxes()
-  
-    '''
-    def save(self, path=None, format=("txt","dawg")):
-        path = path or datapath(self._path).short
+    
+    
+    def _validpath(self, path): 
+        return os.path.exists(path)
+    
+    def loadpickle(self, name, path=None):
+        path_ = path or datapath(self._path).short
+        path = '{}.{}.pickle'.format(path_,name)
         
-        if not isinstance(format,(tuple,list)):
-            format = (format,)
+        if self._validpath(path):
+            if self.verbose:
+                print('loading pickle:'.ljust(16), 
+                    path.replace(nlptk.MODULEDIR,'..')
+                )
+            
+            with open(path,'rb') as f:
+                obj = pickle.load(f)
+        else:
+            obj = None    
+        return obj
+    
+    def loaddawg(self, name, path=None):
+        path_ = path or datapath(self._path).short
+        path = '{}.{}.dawg'.format(path_,name)
         
-        for fmt in format:
+        if self._validpath(path):
+            if self.verbose:
+                print('loading dawg:'.ljust(16), 
+                    path.replace(nlptk.MODULEDIR,'..')
+                )
+            
+            d = dawg.RecordDAWG(">IH")   
+            obj = d.load(path)
+        else:
+            obj = None    
+        return obj
+     
+    def savedawg(self, name, path=None):    
+        path_ = path or datapath(self._path).short      
+        # сохранение словаря для префиксного дерева
+        path = '{}.{}.dawg'.format(path_,name)
+        if self.verbose:
+            print('saving dawg:'.ljust(16), 
+                path.replace(nlptk.MODULEDIR,'..')
+            )
+        self._trie.save(path)
+    
+    
+    def save(self, path=None, as_=("txt","pickle")):
+        path_ = path or datapath(self._path).short
+        
+        saveas = self.saveas or as_
+        if not isinstance(saveas,(tuple,list)):
+            saveas = (saveas,)
+        
+        for fmt in saveas:
             if fmt == "txt":
-                with open('{}.txt'.format(path),'w', encoding='utf8') as f:
+                path = '{}.tagged.txt'.format(path_)
+                
+                if self.verbose:
+                    print('saving txt:'.ljust(16), 
+                        path.replace(nlptk.MODULEDIR,'..')
+                    )
+                
+                with open(path,'w', encoding='utf8') as f:
                     f.writelines('\n'.join(map(str,self._sents)))
-            elif fmt == 'dawg':
-               data = [(str(sent), idx) 
-                    for idx, sent in enumerate(self._sents)
-               ]
-               self.dawg = dawg.IntCompletionDAWG(data)   
-               self.dawg.save('{}.dawg'.format(path))
-    '''
+                    
+            elif fmt == 'pickle':
+                path = '{}.sents.pickle'.format(path_)
+                
+                if self.verbose:
+                    print('saving pickle:'.ljust(16), 
+                        path.replace(nlptk.MODULEDIR,'..')
+                    )
+                
+                with open(path,'wb') as f:
+                    pickle.dump(self._sents, f)
+                path = '{}.vocab.pickle'.format(path_)
+                
+                with open(path,'wb') as f:
+                    pickle.dump(self._vocab, f)
+                
+        self.savedawg('trie',path_)
+       
+    
     
     def __iter__(self):
         return self._iter
@@ -859,8 +980,9 @@ class TaggedSentence():
         self._n = num
         self._delim = delim
         self._prep = prep
-        self._filters = filters or (lambda s:s)
+        self._filters = filters
         self._nwords = 0
+        
         if prep:
             self._sent = self.tagging(sent)
         else:
@@ -891,6 +1013,7 @@ class TaggedSentence():
                 else:
                     token, pos, lemma = res, '', ''
                 threes.append((token,pos,lemma)) 
+            
             except Exception as err:
                 print(repr(sent),self._n,word)
                 raise ValueError(err)
@@ -915,23 +1038,26 @@ class TaggedSentence():
     def text(self):
         return self._sent
     
-    def words(self, lower=True, pos=None, uniq=False):
+    def words(self, idx=-1, lower=True, pos=None, uniq=False):
         sent = self.untagging(self._sent)
         lower = str.lower if lower else lambda s: s
         
-        if isinstance(pos,set):
-            res = [lower(chunk[0]) 
-                    for chunk in sent if chunk[1] in pos
-            ]
-        elif isinstance(pos,str):
-            res = [lower(chunk[0]) 
-                    for chunk in sent if chunk[1].startswith(pos) 
-            ]   
+        if idx != -1:
+            return lower(sent[idx][0])
         else:
-            res = [lower(chunk[0]) for chunk in sent]
-        
-        if uniq:
-            res = set(res)
+            if isinstance(pos,set):
+                res = [lower(chunk[0]) 
+                        for chunk in sent if chunk[1] in pos
+                ]
+            elif isinstance(pos,str):
+                res = [lower(chunk[0]) 
+                        for chunk in sent if chunk[1].startswith(pos) 
+                ]   
+            else:
+                res = [lower(chunk[0]) for chunk in sent]
+            
+            if uniq:
+                res = set(res)
         
         return tuple(res)
         
@@ -966,7 +1092,7 @@ class TaggedSentence():
             for idx,chunk in enumerate(sent)
         ]
            
-        if filtrate: 
+        if filtrate and self._filters: 
             result = self._filters(result)
     
         return tuple(result)   
@@ -985,7 +1111,7 @@ class TaggedSentence():
     
 
     def __str__(self):
-        return self._sent
+        return self.text
 
     def __repr__(self):
         fmt = "TaggedSentence(\n\t'{}',\n\t n={}\n)"
