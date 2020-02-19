@@ -43,7 +43,7 @@ class TfidfModel():
         df += int(smooth_idf)
         n_docs += int(smooth_idf)
         # формула из sklearn.feature_extraction.text
-        result = math.log(n_docs / df ) + smooth_idf
+        result = math.log(n_docs / df ) + smooth_idf  if df else 0.0
         # idf(t) = log [ n / (df(t) + 1) ]) standard textbook notation 
         return result
     

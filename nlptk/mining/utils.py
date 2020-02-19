@@ -80,15 +80,19 @@ def pad_sequences(
     
 class datapath():
     
-    def __init__(self, path, datadir="data", ext=".txt"):
+    def __init__(self, path, datadir="data", ext=None):
         if not path:
             raise ValueError('Path not passed')
         self.appdir = os.path.abspath(os.path.dirname(__file__))
-        self.datadir = datadir
-        self.ext = ext
-        self.name = os.path.basename(os.path.splitext(path)[0])
-        self.short = os.path.join(self.appdir,'data',self.name)
-        self.full = os.path.join(self.appdir,'data',self.name + ext)
+        self.datadir = (datadir 
+                    if os.path.isabs(datadir) 
+                    else  os.path.join(self.appdir,"data") 
+        )           
+        self.splitpath = os.path.splitext(path)
+        self.ext = ext or self.splitpath[1]
+        self.name = os.path.basename(self.splitpath[0])
+        self.short = os.path.join(self.datadir, self.name)
+        self.full = os.path.join(self.datadir, self.name + self.ext)
         
  
         
