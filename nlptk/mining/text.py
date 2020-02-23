@@ -12,7 +12,7 @@ from nltk import FreqDist, ConditionalFreqDist
 
 from textwrap import shorten
 from typing import List
-from collections import Counter,defaultdict
+from collections import Counter,defaultdict, namedtuple
 from pprint import pprint,pformat
 from functools import partial
 from itertools import chain
@@ -53,6 +53,45 @@ class Lexicon():
         return c_dawg.load(r'{}.dawg'.format(self.name)) 
 
 
+class Trie():
+    
+    def __init__(self, trie):
+        self._trie = trie
+    
+    def prefixes(self, key):
+        return self._trie.prefixes(key)    
+    
+    def startswith(self, key):
+        return self._trie.keys(key)        
+    
+    def get(self,key,sort=False):
+        values = self._trie.get(key,[]) 
+        if sort:
+            values.sort(key=lambda t:(t[0],[1]))
+        return values 
+    
+    def items(self, sort=False):
+        items = self._trie.items() 
+        if sort:
+            items.sort(key=lambda x:(x[1][0],x[1][1])) # нужно ли?
+        return items 
+    
+    def keys(self):
+        return self._trie.keys() 
+    
+    def __getitem__(self, key):
+        return self._trie[key]    
+    
+    def __len__(self):
+        return len(self._trie.keys())    
+    
+    def __call__(self, key):
+        prefixes = self.prefixes(key)
+        startswith = self.startswith(key)
+        trie = namedtuple('trie',['prefixes','startswith'])    
+        return trie(prefixes,startswith)
+
+
 class Prep(TokenizerMixin,
             LemmatizerMixin,
             SentencizerMixin,
@@ -88,11 +127,14 @@ class TextCleaner(StripperMixin):
     rules = OrderedDict(
                     hyphenation=(True,),
                     accent=(True,),
+                    contractions=(False,),
+                    possessive_endings=(False,),
                     # нельзя удалять, если мы сегментируем текст на предложения
                     #punctuation=False, 
                     tags=(True,),
                     urls=(True,),
                     numeric=(True,),
+                    roman_numerals=(False,),
                     nonletter_sequences=(True,),
                     quotes=(True,),
                     multiple_whitespaces=(True,)
@@ -656,7 +698,12 @@ class Text():
         )
         self._trie = dawg.RecordDAWG(">IH",data)  
             
-    
+    @property
+    def trie(self):
+        '''Доступ к префиксному дереву текста'''
+        return Trie(self._trie)
+      
+    """
     def trie(self, key=None, sort=True):
         '''Доступ к префиксному дереву текста'''
         if key is None:return self._trie
@@ -674,6 +721,7 @@ class Text():
     @property
     def occur(self):
         return self._trie
+    """
     
     @property
     def vocab(self):
@@ -714,6 +762,7 @@ class Text():
                     res = self._sents
         return res
     
+    # переделать на извлечение из trie
     def words(self, filtrate=False, lower=True, uniq=False):
         result = []
         for sent in self._sents:
@@ -725,6 +774,7 @@ class Text():
         
         return result
     
+    # переделать на извлечение из trie
     def lemmas(self, filtrate=False, lower=True, uniq=False):
         result = []
         for sent in self._sents:
@@ -817,6 +867,9 @@ class Text():
             #-----------------------------------
             # число уникальных слов
             if uniq:
+                # вот здесь придется сначала получить все слова
+                # и только потом узнать сколько их по одному вхождению,
+                # так как эта информация нигде не хранится 
                 result = len(self.words(uniq=True, lower=lower))    
             # общее число вхождений всех словоформ
             else:
@@ -1227,7 +1280,9 @@ the saber cut, first took up his lodging under our roof.'''
     
     prep = Prep()
     rules_clean=OrderedDict(
+        contractions=True,
         roman_numerals=(True,)
+        
     )
     
     rules_filter=OrderedDict(

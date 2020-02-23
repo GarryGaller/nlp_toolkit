@@ -72,9 +72,9 @@ RE_PUNCT = re.compile(r'([%s])+' % re.escape(string.punctuation), re.UNICODE)
 RE_PUNCT2 = re.compile(r'([\s%s])+' % re.escape(''.join(set(string.punctuation) - {"'","`"})), re.UNICODE)
 RE_TAGS = re.compile(r"<([^>]+)>", re.UNICODE)                     # html
 RE_URLS = re.compile(r"(www|http:|https:)+[^\s]+[\w]", re.UNICODE) # urls
-RE_DIGIT = re.compile(r"[0-9]+", re.UNICODE)     # все арабско-индийские цифры (изменить)
-RE_DECIMAL = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры (изменить)
-RE_NUMERIC = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры (изменить)
+RE_DIGIT = re.compile(r"[0-9]+", re.UNICODE)     # все арабско-индийские цифры (!изменить)
+RE_DECIMAL = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры (!изменить)
+RE_NUMERIC = re.compile(r"[0-9]+", re.UNICODE)   # все арабско-индийские цифры (!изменить)
 RE_NONALPHA = re.compile(r"[\W]", re.UNICODE)    # все небуквенные символы
 RE_NONLETTER2 = re.compile(r'(\W)\1', re.UNICODE)        # все повторяющиеся двухсимвольные наборы небуквенных символов
 RE_NONLETTER = re.compile(r'(?=(\W))\1{2,}', re.UNICODE) # все наборы из небуквенных символов длиной от 2-х символов
@@ -88,12 +88,12 @@ RE_BLANK = re.compile(r'[ \t]+', re.UNICODE)     # только пробел и 
 RE_HYPHENATION = re.compile(r'[-]+\s*\r?\n\s*',re.UNICODE) # переносы слов
 
 RE_QOUTES = re.compile(r'["\'«»‹›‘’“”„`]',re.UNICODE)
-RE_QOUTES = re.compile(r'["«»‹›‘’“”„`]',re.UNICODE)
+RE_QOUTES = re.compile(r'["«»‹›‘’“”„`]',re.UNICODE) # без апострофа (одиночной кавычки)
 
 RE_ALPHABETIC = re.compile(r'(((?![\d])\w)+)', re.UNICODE)
 RE_HTML_ENTITY = re.compile(r'&(#?)([xX]?)(\w{1,8});', re.UNICODE)
 
-ROMAN_NUMERALS = re.compile('''
+RE_ROMAN_NUMERALS = re.compile(r'''
       \b                        # начало слова
       M{0,3}                    # тысячи - 0 до 3 M
       (CM|CD|D?C{0,3})          # сотни — 900 (CM), 400 (CD), 0-300 (0 до 3 C),
@@ -102,9 +102,10 @@ ROMAN_NUMERALS = re.compile('''
                                 # или 50-80 (L, с последующими от 0 до 3 X)
       (IX|IV|V?I{0,3})          # единицы - 9 (IX), 4 (IV), 0-3 (0 до 3 I),
                                 # или 5-8 (V, с последующими от 0 до 3 I)
-      \b                        № конец слова  
-''',re.VERBOSE|re.IGNORECASE)
+      \b                        # конец слова  
+''',re.VERBOSE|re.I)
 
+RE_POSSESSIVE_ENDINGS = re.compile(r'((\'|’)s{0,1})', re.UNICODE|re.I)
 
 
 '''

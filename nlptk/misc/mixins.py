@@ -14,10 +14,36 @@ import nltk
 import razdel
 #from spacy.pipeline import SentenceSegmenter
 
-
+from nlptk.patterns import contractions
 from nlptk.patterns import patterns
 from nlptk.morphology import morphology 
 from nlptk.postagging import taggers
+
+
+class RepeatReplacer():
+    def __init__(self, patterns=None, repl=None):
+        self.regex = patterns or re.compile("r(\w*)(\w)\2(\w*)")
+        self.repl = repl or r"\1\2\3"
+        
+    def replace(self,word):
+        loop_res = regex.sub(self.repl, word)
+        if word == loop_res:
+            return loop_res
+        else:
+            return  self.replace(loop_res)
+
+
+
+class RegexReplacer():
+    def __init__(self, patterns):
+        self.patterns = patterns 
+        
+    def replace(self,text):
+        for regex,rep in self.patterns:
+            text = regex.sub(rep[0],text)
+               
+        return text
+
 
 class TaggerMixin():
     
@@ -446,16 +472,23 @@ class StripperMixin():
     @staticmethod
     def strip_roman_numerals(text, marker=''):
         '''  Remove digits from s using RE_ROMAN_NUMERALS'''
-        return patterns.ROMAN_NUMERALS.sub(marker, text)
+        return patterns.RE_ROMAN_NUMERALS.sub(marker, text)
     
     
     @staticmethod
-    def strip_nonletter_sequences(text,marker=' '):
+    def strip_nonletter_sequences(text, marker=' '):
         ''' Remove non-letter sequences'''
         return patterns.RE_NONLETTER.sub(marker, text)
     
+    @staticmethod
+    def strip_contractions(text): 
+        '''Replacing common contractions'''
+        return RegexReplacer(contractions.CONTRACTIONS).replace(text)
     
- 
+    @staticmethod
+    def strip_possessive_endings(text, marker=''): 
+        '''Replacing common contractions'''
+        return patterns.RE_POSSESSIVE_ENDINGS.sub(marker, text)
     
     #--------------------------------------------------
     @staticmethod    
@@ -798,7 +831,18 @@ strip_multiple_whitespaces() - collapse multiple whitespaces into a single one
 simple_tokenize() - tokenize by splitting on whitespace
 remove_short() - remove words less than 3 characters long
 remove_stopwords()
-'''              
+'''     
+
+
+
+
+if __name__ =="__main__":
+    
+    text = """I am in your team, aren’t I?
+    I’m not gonna play tennis with you"""    
+    replacer = RegexReplacer(contractions.CONTRACTIONS)
+    print(replacer.replace(text)) 
+         
                     
         
     
