@@ -271,14 +271,7 @@ class Path():
         return next(self._iter)
 
 
-class Loader():
-    pass
 
-
-class Saver():
-    pass
-    
-    
 class Stream():
     '''
     >>> lines = Stream(path)
@@ -730,14 +723,17 @@ class Text():
     
     @property
     def nsents(self):
+        '''Число предложений в тексте'''
         return len(self._sents) 
     
     @property
     def nwords(self):
+        '''Число слов в тексте'''
         return self._nwords
     
     @property
     def nlemmas(self):
+        '''Число лемм в тексте'''
         return len(self._vocab)
     
     def sents(self, n_sent=None, max_words=None, min_words=None):
@@ -762,7 +758,7 @@ class Text():
                     res = self._sents
         return res
     
-    # переделать на извлечение из trie
+    # TODO: переделать на извлечение из trie
     def words(self, filtrate=False, lower=True, uniq=False):
         result = []
         for sent in self._sents:
@@ -774,7 +770,7 @@ class Text():
         
         return result
     
-    # переделать на извлечение из trie
+    # TODO: переделать на извлечение из trie
     def lemmas(self, filtrate=False, lower=True, uniq=False):
         result = []
         for sent in self._sents:
@@ -793,6 +789,8 @@ class Text():
             universal_tagset=False, 
             ret_cond=False
             ):
+        '''Создает частотные словари или отсортированные по частоте списки
+        частей речи'''
         
         def merge(tags):
             result = FreqDist()
@@ -810,7 +808,8 @@ class Text():
         cfd = ConditionalFreqDist()
         
         for sent in self._sents:
-            tokens = sent.untagging() 
+            #tokens = sent.untagging() 
+            tokens = sent.tuples
             for tok,tag,lemma in tokens:
                 cfd[tag][lemma.lower()] += 1
         cond = cfd.conditions()
@@ -964,7 +963,9 @@ class Text():
         pass
     
     def hapaxes(self, words=False, filtrate=False):
+        '''Метод извлекающий из текста слова-одиночки'''
         if not words:
+            # ищем в леммах
             res = self._vocab
         else:
             res = FreqDist(self.words(filtrate=filtrate))
@@ -1090,29 +1091,67 @@ class TaggedSentence():
         self._prep = prep
         self._filters = filters
         self._nwords = 0
+        self._sent = [] # список кортежей (token, pos, lemma)
         
-        if prep:
-            self._sent = self.tagging(sent)
-        else:
+        if isinstance(sent,list):
             self._sent = sent
-            self._nwords = len(self.untagging())    
-            
-    def tagging(self, sent):
+        else:
+            if delim in sent:
+                self._sent = self.tagsent2tuples(sent)
+            else:
+                self._sent = self.rawsent2tuples(sent)
+                   
+        self._nwords = len(self._sent)    
+    
+    
+    def rawsent2tuples(self, sent:str):
+        '''Создание списка кортежей (token, pos, lemma)
+        с предварительной токенизацией, лемматизацией и тэгированием исходной
+        нетэгированной строки.
+        Необходимо чтобы в конструктор был передан параметр <prep> 
+        '''
+        
+        if not self._prep:
+            raise Exception(
+                'The <prep> parameter was not passed in TaggedSentence'
+            )
+        
+        if not isinstance(sent, str):
+            raise TypeError('sent not str')
         
         tokens = [token for token in self._prep.tokenizer(sent) if token]
         lemmas = list(self._prep.lemmatizer(tokens,tagger=self._prep.tagger))
-        
         threes = []
+        
         for token,(lemma,pos) in zip(tokens,lemmas):
-           threes.append(self._delim.join([token,pos,lemma]))
-           self._nwords += 1    
-        tagged_sent = ' '.join(threes)    
+            threes.append((token,pos,lemma))
+        return threes
         
-        return tagged_sent
+    
+    def tagsentfromtuples(self, sent:List[tuple]):        
+        '''Создание тэгированного представления строки из
+        списка кортежей (token, pos, lemma) 
+        '''
+        if not isinstance(sent, list):
+            raise TypeError('sent not list')
         
-    def untagging(self, sent=None):
         threes = []
-        sent = sent or self._sent
+        for token,lemma,pos in sent:
+           threes.append(self._delim.join([token,pos,lemma]))
+              
+        tagged_sent = ' '.join(threes)
+        return tagged_sent
+    
+    
+    def tagsent2tuples(self, sent:str):
+        '''Создание списка кортежей (token, pos, lemma) 
+        из тэгированной строки'''
+        
+        if not isinstance(sent, str):
+            raise TypeError('sent not str')
+        
+        threes = []
+        
         for  word in sent.split(' '):
             try:
                 res = word.split(self._delim)
@@ -1127,27 +1166,59 @@ class TaggedSentence():
                 raise ValueError(err)
                         
         return threes
+        
     
+    def tagging(self, sent:str=None):
+        '''Создание тэгированного представления строки
+        из готового списка кортежей (token,pos,lemma), либо из raw строки
+        с предварительной токенизацией, лемматизацией и тэгированием
+        '''
+        
+        if sent and not isinstance(sent, str):
+            raise TypeError('sent not str')
+        
+        sent = self._sent or sent
+        
+        if isinstance(sent,list):
+            tagged_sent = self.tagsentfromtuples(sent)
+        else:
+            tagged_sent = self.tagsentfromtuples(self.rawsent2tuples(sent))    
+        
+        return tagged_sent
+    
+    
+    def untagging(self, sent:str):
+        return self.tagsent2tuples(sent)
+
     
     @property
     def n(self):
+        '''Свойство предоставляющее доступ к номеру предложения в тексте'''
         return self._n
     
     @property
     def nwords(self):
+       '''Свойство предоставляющее доступ к количеству слов в предложении'''
        return self._nwords
        
     @property
+    def tuples(self):
+        '''Свойство предоставляющее доступ к списку кортежей
+        вида (token,pos,lemma)'''
+        return self._sent
+    
+    @property
     def raw(self):
-        sent = self.untagging(self._sent)
-        return ' '.join(chunk[0] for chunk in sent)
+        '''Свойство предоставляющее доступ к исходному предложению без пунктуации'''
+        return ' '.join(chunk[0] for chunk in self._sent)
     
     @property
     def text(self):
-        return self._sent
+        '''Свойство предоставляющее доступ к тэгированной версии предложения'''
+        return self.tagging()
     
     def words(self, idx=-1, lower=True, pos=None, uniq=False):
-        sent = self.untagging(self._sent)
+        sent = self._sent
         lower = str.lower if lower else lambda s: s
         
         if idx != -1:
@@ -1169,12 +1240,18 @@ class TaggedSentence():
         
         return tuple(res)
         
+    
     def pos(self):
-        sent = self.untagging(self._sent)
+        '''Возвращает часть речи, которая была присвоена токену'''
+        
+        sent = self._sent
         return tuple(chunk[1] for chunk in sent)
     
+    
     def lemmas(self, lower=True, pos=None, uniq=False):
-        sent = self.untagging(self._sent)
+        '''Возвращает все леммы текста'''
+        
+        sent = self._sent
         lower = str.lower if lower else lambda s: s
         
         if isinstance(pos,set):
@@ -1194,7 +1271,9 @@ class TaggedSentence():
         return tuple(res)
         
     def tokens(self, filtrate=False, **kwargs):
-        sent = self.untagging(self._sent)
+        '''Возвращает все токены текста'''
+        
+        sent = self._sent
         
         result = [Token(*chunk,self._n,idx,**kwargs) 
             for idx,chunk in enumerate(sent)
@@ -1206,6 +1285,7 @@ class TaggedSentence():
         return tuple(result)   
     
     def count(self, words=True, pos=None, lower=True, uniq=None):
+        '''Производит подсчет слов или лемм'''
         
         result = 0
        
@@ -1223,12 +1303,14 @@ class TaggedSentence():
 
     def __repr__(self):
         fmt = "TaggedSentence(\n\t'{}',\n\t n={}\n)"
-        return fmt.format(self._sent, self._n)
-
-
+        return fmt.format(self.text, self._n)
+    
+    
 class Token():
     
-    def __init__(self, token, pos, lemma, nsent=-1, idx=-1,**kwargs):
+    def __init__(self, token, pos, lemma, 
+            nsent=-1, idx=-1,**kwargs
+        ):
         
         if not kwargs.get('lower'):
             lower = lambda s:s
