@@ -86,7 +86,7 @@ class datapath():
         self.appdir = os.path.abspath(os.path.dirname(__file__))
         self.datadir = (datadir 
                     if os.path.isabs(datadir) 
-                    else  os.path.join(self.appdir,"data") 
+                    else  os.path.join(self.appdir,datadir) 
         )           
         self.splitpath = os.path.splitext(path)
         self.ext = ext or self.splitpath[1]

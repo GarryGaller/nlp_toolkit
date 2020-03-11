@@ -20,6 +20,8 @@ from collections import OrderedDict
 from itertools import islice
 #from docx import Document
 import nlptk
+from nlptk.spelling import spellers
+from nlptk.mining.wv import word2vec
 from nlptk.mining.utils import chardetector, datapath, _sort, _top
 from nlptk.mining.vocab import Vocabulary
 from nlptk.ratings.rake.rake import Rake
@@ -30,7 +32,9 @@ from nlptk.misc.mixins import (
                 TokenizerMixin,
                 TaggerMixin,
                 LemmatizerMixin,
-                SentencizerMixin)
+                SentencizerMixin,
+                SpellerMixin
+                )
 
 
 if sys.version_info < (3,6):
@@ -95,7 +99,8 @@ class Trie():
 class Prep(TokenizerMixin,
             LemmatizerMixin,
             SentencizerMixin,
-            TaggerMixin
+            TaggerMixin,
+            SpellerMixin
             ):
         
     
@@ -111,7 +116,8 @@ class Prep(TokenizerMixin,
             'lemmatizer':partial(
                     self.lemmatize_nltk,
                     pos=True,
-                    normalize_uppercase=str.capitalize) #tagset='universal'
+                    normalize_uppercase=str.capitalize), #tagset='universal'
+            'speller':self.speller_en(max_dist=2)        
         }
         
         self.__dict__.update({
@@ -376,9 +382,7 @@ class Corpus():
             if self.verbose:
                 print(process, txt.replace(nlptk.MODULEDIR,'..'))
             
-            
-            if self.verbose:
-                start = time.time()
+            start = time.time()
             # быстрее всего читать sents и vocab текстов из pickle
             # чем из tagged.txt
             text = Text(path, 
@@ -395,14 +399,17 @@ class Corpus():
                 print('time:'.ljust(width),time.time() - start)
             # обе операции в среднем занимают 1сек
             words = text.words(filtrate=self.filtrate) # не фильтруем?
+            words_time = time.time() - start    
             self._vocab += Vocabulary(words)
+            vocab_time = time.time() - start 
             
             if self.verbose:
                 wraptext = shorten(
                     str(words[:10]), width=80, placeholder="...]"
                 )
-                print('add vocab:'.ljust(width), wraptext)
-                print('TOTAL TIME:'.ljust(width),time.time() - start)
+                print('words_time:'.ljust(width),words_time)
+                print('vocab:'.ljust(width), wraptext)
+                print('TOTAL TIME:'.ljust(width),vocab_time)
             
             if self.autosave and 'creating' in process: 
                 text.save(as_=self.saveas)
@@ -601,6 +608,7 @@ class Text():
         self._vocab = FreqDist()
         self._trie = dawg.RecordDAWG(">IH")
         
+        
         if input == 'filename': 
             self._path = intake
             #self.filename = os.path.basename(os.path.splitext(self._path)[0])
@@ -691,6 +699,13 @@ class Text():
         )
         self._trie = dawg.RecordDAWG(">IH",data)  
             
+    
+    @property
+    def embed(self):
+        '''Доступ к Word2Vec для создания embedding'''
+        return word2vec()
+    
+    
     @property
     def trie(self):
         '''Доступ к префиксному дереву текста'''
@@ -736,6 +751,40 @@ class Text():
         '''Число лемм в тексте'''
         return len(self._vocab)
     
+    def _iter_by_sents(self,
+                                attr, 
+                                filtrate=False, 
+                                lower=False, 
+                                pos=None
+                                ):
+        for sent in self.sents():
+            tokens = sent.tokens(filtrate=filtrate, lower=lower, pos=pos)
+            sent = []
+            for token in tokens:
+                sent.append(getattr(token,attr))
+            yield sent
+    
+    
+    def sents2words(self, filtrate=False, lower=False, pos=None):
+        result = [sent for sent in self._iter_by_sents(
+                        attr="word",
+                        filtrate=filtrate, 
+                        lower=lower, 
+                        pos=pos)
+                ]
+        return result        
+    
+
+    def sents2lemmas(self, filtrate=False, lower=False, pos=None):
+        result = [sent for sent in self._iter_by_sents(
+                        attr="lemma",
+                        filtrate=filtrate, 
+                        lower=lower, 
+                        pos=pos)
+                ]
+        return result   
+    
+    
     def sents(self, n_sent=None, max_words=None, min_words=None):
         if n_sent is not None:
             res = self._sents[n_sent]
@@ -758,30 +807,49 @@ class Text():
                     res = self._sents
         return res
     
-    # TODO: переделать на извлечение из trie
-    def words(self, filtrate=False, lower=True, uniq=False):
-        result = []
+    def iterwords(self, filtrate=False, lower=True, pos=None):
+        
         for sent in self._sents:
-            tokens = sent.tokens(filtrate=filtrate,lower=lower)
-            words = [token.word for token in tokens]
-            result.extend(words)
+            tokens = sent.tokens(filtrate=filtrate, lower=lower, pos=pos)
+            for token in tokens:
+                yield token.word 
+
+    
+    def iterlemmas(self, filtrate=False, lower=True, pos=None):
+        
+        for sent in self._sents:
+            tokens = sent.tokens(filtrate=filtrate, lower=lower, pos=pos)
+            for token in tokens:
+                yield token.lemma 
+    
+    
+    # TODO: переделать на извлечение из trie
+    def words(self, filtrate=False, lower=True, pos=None, uniq=False):
+        result = [word 
+                for word in self.iterwords(
+                    filtrate=filtrate, lower=lower, pos=pos
+            )
+        ]
+        
         if uniq:
             result = list(set(result))
         
         return result
     
     # TODO: переделать на извлечение из trie
-    def lemmas(self, filtrate=False, lower=True, uniq=False):
-        result = []
-        for sent in self._sents:
-            tokens = sent.tokens(filtrate=filtrate,lower=lower)
-            words = [token.lemma for token in tokens]
-            result.extend(words)
+    def lemmas(self, filtrate=False, lower=True, pos=None, uniq=False):
+        result = [lemma
+                for lemma in self.iterlemmas(
+                    filtrate=filtrate, lower=lower, pos=pos
+                )
+        ]
+        
         if uniq:
             result = list(set(result))
         
         return result
 
+    
     def postags(self, 
             pos=None,
             sort=False,
@@ -810,7 +878,7 @@ class Text():
         for sent in self._sents:
             #tokens = sent.untagging() 
             tokens = sent.tuples
-            for tok,tag,lemma in tokens:
+            for tok, tag, lemma in tokens:
                 cfd[tag][lemma.lower()] += 1
         cond = cfd.conditions()
         
@@ -971,6 +1039,9 @@ class Text():
             res = FreqDist(self.words(filtrate=filtrate))
         return res.hapaxes()
     
+    @property
+    def speller(self):
+        return self._prep.speller()
     
     def _validpath(self, path): 
         return os.path.exists(path)
@@ -1226,11 +1297,13 @@ class TaggedSentence():
         else:
             if isinstance(pos,set):
                 res = [lower(chunk[0]) 
-                        for chunk in sent if chunk[1] in pos
+                        for chunk in sent 
+                            if chunk[1] in pos
                 ]
             elif isinstance(pos,str):
                 res = [lower(chunk[0]) 
-                        for chunk in sent if chunk[1].startswith(pos) 
+                        for chunk in sent 
+                            if chunk[1].startswith(pos) 
                 ]   
             else:
                 res = [lower(chunk[0]) for chunk in sent]
@@ -1256,11 +1329,13 @@ class TaggedSentence():
         
         if isinstance(pos,set):
             res = [lower(chunk[2]) 
-                    for chunk in sent if chunk[1] in pos
+                    for chunk in sent 
+                        if chunk[1] in pos
             ]
         elif isinstance(pos,str):
             res = [lower(chunk[2]) 
-                    for chunk in sent if chunk[1].startswith(pos) 
+                    for chunk in sent 
+                        if chunk[1].startswith(pos) 
             ]  
         else:
             res = [lower(chunk[2]) for chunk in sent]
@@ -1270,19 +1345,31 @@ class TaggedSentence():
         
         return tuple(res)
         
-    def tokens(self, filtrate=False, **kwargs):
+    def tokens(self, filtrate=False, pos=None, **kwargs):
         '''Возвращает все токены текста'''
         
         sent = self._sent
         
-        result = [Token(*chunk,self._n,idx,**kwargs) 
+        list_tokens = [Token(*chunk,self._n,idx,**kwargs) 
             for idx,chunk in enumerate(sent)
         ]
            
+        if pos:
+            if isinstance(pos,set):
+                list_tokens = [token
+                    for token in list_tokens
+                        if token.pos in pos
+                ]
+            elif isinstance(pos,str):
+                list_tokens = [token 
+                        for token in list_tokens 
+                            if token.pos.startswith(pos) 
+                ]  
+        
         if filtrate and self._filters: 
-            result = self._filters(result)
+            list_tokens = self._filters(list_tokens)
     
-        return tuple(result)   
+        return tuple(list_tokens)   
     
     def count(self, words=True, pos=None, lower=True, uniq=None):
         '''Производит подсчет слов или лемм'''
@@ -1312,6 +1399,7 @@ class Token():
             nsent=-1, idx=-1,**kwargs
         ):
         
+        
         if not kwargs.get('lower'):
             lower = lambda s:s
         else:
@@ -1322,7 +1410,6 @@ class Token():
         self.lemma = lower(lemma)
         self.nsent = nsent
         self.idx = idx
-        
         
     def __str__(self):
         return self.lemma

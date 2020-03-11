@@ -2,7 +2,8 @@ import re
 import sys,os
 import string
 import unicodedata
-import gensim
+from functools import partial
+
 from nltk.tokenize import ToktokTokenizer
 from nltk.tokenize import SpaceTokenizer
 from nltk.tokenize import WhitespaceTokenizer
@@ -10,14 +11,17 @@ from nltk.tokenize import TabTokenizer
 from nltk.tokenize import WordPunctTokenizer
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem import WordNetLemmatizer
+import gensim
 import nltk
 import razdel
 #from spacy.pipeline import SentenceSegmenter
+
 
 from nlptk.patterns import contractions
 from nlptk.patterns import patterns
 from nlptk.morphology import morphology 
 from nlptk.postagging import taggers
+from nlptk.spelling import spellers
 
 
 class RepeatReplacer():
@@ -45,6 +49,20 @@ class RegexReplacer():
         return text
 
 
+class SpellerMixin():
+    
+    @staticmethod
+    def speller_en(backend='CyHunspell',**kwargs):
+        ''''''
+        return spellers.Speller(backend=backend, lang='en', **kwargs)
+        
+    
+    @staticmethod
+    def speller_ru(backend='CyHunspell',**kwargs):
+        ''''''
+        return spellers.Speller(backend=backend, lang='ru', **kwargs)
+        
+    
 class TaggerMixin():
     
     tagger4 = taggers.get_tagger('4-ngram_tagger')
@@ -55,7 +73,8 @@ class TaggerMixin():
         '''4-gram tagger'''
         
         yield from TaggerMixin.tagger4(tokens)
-
+    
+    @staticmethod
     def tagger_3ngram(tokens, *args, lang="eng", **kwargs):
         '''3-gram tagger'''
         

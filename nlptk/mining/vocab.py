@@ -64,6 +64,7 @@ class Vocabulary():
             self._step_iter(other.tokens)
         return self
     
+    
     def __init__(self,tokens:List[str]=[]):
         
         #all_tokens = chain.from_iterable(corpus)
@@ -90,18 +91,20 @@ class Vocabulary():
         
         self._step_iter(tokens)
          
-    def _step_iter(self,tokens):
+    def _step_iter(self,tokens=None):
+        tokens = tokens or self.tokens
         if tokens:
             self._iter_ndocs() 
-            self._iter_nwords(tokens)
+            #self._iter_nwords(tokens)
             self._iter_vocab(tokens)
             self._iter_cfs(tokens)
-            self._iter_ccfs(tokens)
-            self._iter_dfs(tokens)
+            #self._iter_ccfs(tokens)
+            #self._iter_dfs(tokens)
             self._iter_tfidf()       
     
     def tok2id(self,tokens):
         return [self._vocab[token] for token in tokens]
+    
     
     def id2tok(self,ids):
         if not self._inv_vocab:
@@ -109,6 +112,7 @@ class Vocabulary():
                 idx:tok for tok,idx in self._vocab.items()
             }
         return [self._inv_vocab[idx] for idx in ids]
+    
     
     def id2map(self,idx=None):
         if not self._inv_vocab:
@@ -119,6 +123,7 @@ class Vocabulary():
             return self._inv_vocab[idx]
         return self._inv_vocab
 
+    
     def tok2map(self,token=None):
         if token is not None:
             return self._vocab[token]
@@ -129,6 +134,26 @@ class Vocabulary():
         '''Total number of documents in the collection'''
         self.ndocs += 1
     
+    
+    def _iter_vocab(self,tokens):
+        ''' Each word in the dictionary is assigned a unique identifier'''
+        tokens = set(tokens)
+        for key in tokens:
+            token = self._vocab[key]
+            # Document frequency - number of documents in which the word occurs
+            self._dfs[token] += 1
+    
+    
+    def _iter_cfs(self,tokens):        
+        '''Word frequencies for each document'''
+        tokens = self.tok2id(tokens)
+        counter = Counter(tokens)
+        self._cfs.append(counter)
+        #The frequency of words in the entire corpus of documents
+        self._ccfs += Counter(counter)
+        self.nwords += sum(counter.values())
+    
+    """
     def _iter_nwords(self,tokens):
         '''Total number of documents in the collection'''
         self.nwords += len(tokens)
@@ -137,33 +162,22 @@ class Vocabulary():
         '''The frequency of words in the entire corpus of documents'''
         tokens = self.tok2id(tokens)
         self._ccfs += Counter(tokens)     
-        
     
-    def _iter_vocab(self,tokens):
-        ''' Each word in the dictionary is assigned a unique identifier'''
-        tokens = set(tokens)
-        for key in tokens:
-            self._vocab[key]
-        
-    '''
     def _iter_dfs(self,tokens):    
         start = time.time()
         for token in self._vocab:
             res = 1.0  if token in tokens else 0
             self._dfs[token] += res
         print('_iter_dfs',time.time() - start, len(self._vocab), len(tokens))
-    '''
+    
     
     def _iter_dfs(self,tokens):    
         '''Document frequency - number of documents in which the word occurs'''
         tokens = self.tok2id(tokens)
         for token in set(tokens):
             self._dfs[token] += 1
-        
-    def _iter_cfs(self,tokens):        
-        '''Word frequencies for each document'''
-        tokens = self.tok2id(tokens)
-        self._cfs.append(Counter(tokens))
+    """    
+
     
     
     def tf(self, n_doc, token=None):
