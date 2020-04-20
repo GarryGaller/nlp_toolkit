@@ -1,5 +1,6 @@
 import os,sys
 import pickle
+from platform import architecture, system
 from pprint import pprint
 import nltk
 from nltk.corpus import brown
@@ -17,6 +18,8 @@ from nltk.tag import CRFTagger
 from nltk.tag import BrillTagger
 from nltk.tag import HiddenMarkovModelTagger
 
+
+MODULEDIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 PATTERNS = [
     (r'^-?[0-9]+(.[0-9]+)?$', 'CD'),   # cardinal numbers
@@ -73,20 +76,44 @@ class Hunpos():
     '''HunposTagger'''
     
     def __init__(self,
-                path_to_bin='hunpos',
+                path_to_bin='hunpos-tag',
                 path_to_model='en_wsj.model', 
                 **kwargs):   
         
         self.__dict__.update(kwargs)
         
-        if not os.path.isabs(path_to_bin):
-            path_to_bin = os.path.join(sys.exec_prefix,
-                r'lib\site-packages', path_to_bin
-            )
+        os_ = system().lower()
         
+        ext = '.exe' if os_ == 'windows' else ''
+        
+        if not os.path.isabs(path_to_bin):
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            path_to_bin = os.path.join(current_dir, path_to_bin)
+        
+        paths = [
+                path_to_bin + ext,
+                os.path.join(sys.exec_prefix,
+                            r'lib\site-packages', 
+                            'hunpos', 'hunpos-tag' + ext
+                ),
+                os.path.join(
+                    MODULEDIR, 'bin', 'hunpos', 
+                    os_,'hunpos-tag' + ext
+                )
+        ]
+        
+        for path in paths:
+           if os.path.exists(path):
+                path_to_bin = path
+                break
+        else:
+            raise FileNotFoundError(paths)  
+               
+       
         if not os.path.isabs(path_to_model):
-            path_to_model = os.path.join(path_to_bin,
-                r'en_wsj.model',path_to_model
+            path_to_model = os.path.join(
+                os.path.dirname(path_to_bin),
+                path_to_model
             )
         
         self.tagger = HunposTagger(
@@ -106,10 +133,22 @@ class Senna():
         
         self.__dict__.update(kwargs)
         
-        if not os.path.isabs(path_):
-            path_to_bin = os.path.join(sys.exec_prefix,
-                r'lib\site-packages', path
-            )
+        if not os.path.isabs(path):
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(current_dir, path)
+        
+        paths = (
+                path,
+                os.path.join(sys.exec_prefix, r'lib\site-packages', 'senna'),
+                os.path.join(MODULEDIR, 'bin', 'senna')
+        )
+        
+        for path in paths:
+            if os.path.exists(path):
+               break
+        else:
+            raise FileNotFoundError(paths) 
+            
         
         self.tagger = SennaTagger(path, **kwargs).tag
     
@@ -121,6 +160,9 @@ class Senna():
 
 
 if __name__ == "__main__":
+    import warnings
+    warnings.filterwarnings('always')
+    
     APPDIR = os.path.dirname(__file__)
     path = os.path.join(APPDIR,'data','4-ngram_tagger.pickle')
 
@@ -150,7 +192,7 @@ with very little to distress or vex her.'''
     
     tokens = nltk.word_tokenize(sent2)
    #-----------------------------------------
-    text = nltk.word_tokenize()
+    
     #pprint(nltk.pos_tag(tokens))
     [('The', 'DT'),    
      ('quick', 'JJ'),
@@ -203,20 +245,43 @@ with very little to distress or vex her.'''
 
     
     untagged_sentences = [[token for token,_ in sent] for sent in test]
-    tagged_test_sentences = tagger.tag_sents(untagged_sentences)
+    tagged_test_sentences = backoff_tagger.tag_sents(untagged_sentences)
     gold = [str(tag) for sentence in test for _,tag in sentence]
     pred = [str(tag) for sentence in tagged_test_sentences 
                         for _,tag in sentence]
     
     print(metrics.classification_report(gold, pred))
+    
     '''
     micro avg       0.92      0.92      0.92     95442
     macro avg       0.54      0.51      0.51     95442
     weighted avg    0.92      0.92      0.92     95442
     '''
+     
+    hunpos_tagger = Hunpos()
+    pprint(hunpos_tagger(tokens))
+    [('The', b'DT'),
+     ('quick', b'JJ'),
+     ('brown', b'JJ'),
+     ('fox', b'NN'),
+     ('jumps', b'NNS') # ошибка!
+     ('over', b'IN'),
+     ('the', b'DT'),
+     ('lazy', b'JJ'),
+     ('dog', b'NN')]
     
     
-
+    senna_tagger = Senna()
+    pprint(senna_tagger(tokens))
+    [('The', 'DT'),
+     ('quick', 'JJ'),
+     ('brown', 'JJ'),
+     ('fox', 'NN'),
+     ('jumps', 'VBZ'),
+     ('over', 'IN'),
+     ('the', 'DT'),
+     ('lazy', 'JJ'),
+     ('dog', 'NN')]
 
 
 

@@ -849,6 +849,13 @@ class Text():
         
         return result
 
+    def tags(self):
+        result = []
+        for sent in self._sents:
+            result.extend(sent.tags)
+            
+        return result    
+    
     
     def postags(self, 
             pos=None,
@@ -877,7 +884,7 @@ class Text():
         
         for sent in self._sents:
             #tokens = sent.untagging() 
-            tokens = sent.tuples
+            tokens = sent.tags
             for tok, tag, lemma in tokens:
                 cfd[tag][lemma.lower()] += 1
         cond = cfd.conditions()
@@ -1273,7 +1280,7 @@ class TaggedSentence():
        return self._nwords
        
     @property
-    def tuples(self):
+    def tags(self):
         '''Свойство предоставляющее доступ к списку кортежей
         вида (token,pos,lemma)'''
         return self._sent
