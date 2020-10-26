@@ -62,6 +62,7 @@ def get_tagger(path='data/4-ngram_tagger.pickle',sents=None,ret='func'):
     else:
         with open(path, 'rb') as f:
             tagger = pickle.load(f)
+    
     if ret == "func":
         tagger = tagger.tag
     elif ret == 'class':
@@ -118,10 +119,10 @@ class Hunpos():
         
         self.tagger = HunposTagger(
             path_to_model, path_to_bin, **kwargs
-            ).tag
+        )
     
-    def __call__(self,tokens):
-        return  self.tagger(tokens)  
+    def __call__(self, tokens):
+        return  self.tagger.tag(tokens) 
 
 
 class Senna():
@@ -148,12 +149,11 @@ class Senna():
                break
         else:
             raise FileNotFoundError(paths) 
-            
-        
-        self.tagger = SennaTagger(path, **kwargs).tag
-    
-    def __call__(self,tokens):
-        return  self.tagger(tokens)  
+         
+        self.tagger = SennaTagger(path, **kwargs)
+  
+    def __call__(self, tokens):
+        return  self.tagger.tag(tokens)  
 
 
 
@@ -258,18 +258,6 @@ with very little to distress or vex her.'''
     weighted avg    0.92      0.92      0.92     95442
     '''
      
-    hunpos_tagger = Hunpos()
-    pprint(hunpos_tagger(tokens))
-    [('The', b'DT'),
-     ('quick', b'JJ'),
-     ('brown', b'JJ'),
-     ('fox', b'NN'),
-     ('jumps', b'NNS') # ошибка!
-     ('over', b'IN'),
-     ('the', b'DT'),
-     ('lazy', b'JJ'),
-     ('dog', b'NN')]
-    
     
     senna_tagger = Senna()
     pprint(senna_tagger(tokens))
@@ -282,8 +270,27 @@ with very little to distress or vex her.'''
      ('the', 'DT'),
      ('lazy', 'JJ'),
      ('dog', 'NN')]
-
-
+    
+    
+    
+    hunpos_tagger = Hunpos()
+    pprint(hunpos_tagger(tokens))
+    [('The', b'DT'),
+     ('quick', b'JJ'),
+     ('brown', b'JJ'),
+     ('fox', b'NN'),
+     ('jumps', b'NNS'), # ошибка!
+     ('over', b'IN'),
+     ('the', b'DT'),
+     ('lazy', b'JJ'),
+     ('dog', b'NN')]
+    
+    
+    
+  
+    
+    
+    
 
 
 '''

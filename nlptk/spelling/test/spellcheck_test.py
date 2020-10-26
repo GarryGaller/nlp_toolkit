@@ -12,7 +12,7 @@
 
 import time
 import re, collections
-
+import os
 def get_words(text): 
     return re.findall(
         r'[a-z]+|[а-я]+', 
@@ -112,7 +112,7 @@ def norvig_correct(word,top=1):
 #-------------------------------------------------
 def nltk_correct(vocabulary,word_to_check,restrict=False,ngram=3,top=1):
     if restrict:
-        vocabulary = [i for w in vocabulary if w[0] == word_to_check[0]]
+        vocabulary = [w for w in vocabulary if w[0] == word_to_check[0]]
     # calculate the distance of each word with entry and link both together
     possible_fixes = [(nltk.jaccard_distance(
                             set(nltk.ngrams(word_to_check, n=ngram)), \
@@ -132,7 +132,7 @@ if __name__ == "__main__":
     #print(nltk_correct(words.words(),'incendenece',top=10))
     #['indecence', 'impendence', 'incendiary', 'intendence', 'indene', 'incendivity', 'independence', 'incense', 'incendiarism', 'incandescence']
     
-    filepath = r".\RUSSIAN\1grams-3\1grams-3.txt"           # 875111
+    filepath = os.path.join(os.path.dirname(__file__), r"1grams-3.txt")           # 875111
     #filepath = r'.\RUSSIAN\efremova-wintxt\efremova.txt'   # всего 3357031,  уникальных 198299
     
     text = open(filepath,encoding='utf-8').read()
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     print(len(vocabulary))  # 
     NWORDS = train(get_words(text)) # частотный словарь
     
-    words = ['серибро','превет', 'очепятка','стикло','мышъ']
+    words = ['серибро','превет', 'очипятка','стикло','мышъ']
     print('nltk_correct')
     for word in words:
         start = time.time()

@@ -83,9 +83,9 @@ class Dictionary():
     def text2onehot(self, tokens, dim=1000):
         #onehot = [0] * dim
         onehot = np.zeros((len(dim),),dtype=np.float)
-        for i,token in enumerate(tokens):
+        for token in tokens:
             if token in self.vocab:
-                onehot[i] = 1 
+                onehot[vocab[token]] = 1 
         return onehot 
 
 

@@ -298,25 +298,27 @@ class Vocabulary():
     def text2seq(self,tokens):
         return self.tok2id(tokens)   
      
-    
+    # на самом деле это не чистый onehot encoding, а bag of words 
     def text_to_onehot_vector(self,tokens,n=None,vocab=None):
         vocab = vocab or self._vocab
         vector = np.zeros((len(vocab),))
         
-        for i,token in enumerate(tokens):
-            if token in self._vocab.values():
-                vector[i] = 1 
+        for token in tokens:
+            idx = vocab.get(token)
+            if idx is not None:
+                vector[idx] = 1 
         
         return vector
 
-    
+    # частотный bag of words 
     def text_to_freq_vector(self, tokens,n,vocab=None):
         vocab = vocab or self._vocab
         vector = np.zeros((len(vocab),))
         
-        for i,token in enumerate(tokens):
-            if token in self._vocab.values():
-                vector[i] = self._cfs[n][token] 
+        for token in tokens):
+            idx = vocab.get(token)
+            if idx is not None:    
+                vector[idx] = self._cfs[n][token] 
         
         return vector 
     
@@ -325,9 +327,10 @@ class Vocabulary():
         vocab = vocab or self._vocab
         vector = np.zeros((len(vocab),))
         n_tokens = len(tokens)
-        for i,token in enumerate(tokens):
-            if token in self._vocab.values():
-                vector[i] = TfidfModel()(
+        for token in tokens):
+            idx = vocab.get(token)
+            if idx is not None: 
+                vector[idx] = TfidfModel()(
                     token, 
                     self._cfs[n][token], 
                     self._dfs[token], 
@@ -337,7 +340,7 @@ class Vocabulary():
         
         return vector
     
-    
+    # ????
     def texts_to_matrix(self,texts,vocab=None,typ="onehot"):
          '''texts - список списков слов для каждого 
          токенизированного текста'''
