@@ -315,7 +315,7 @@ class Vocabulary():
         vocab = vocab or self._vocab
         vector = np.zeros((len(vocab),))
         
-        for token in tokens):
+        for token in tokens:
             idx = vocab.get(token)
             if idx is not None:    
                 vector[idx] = self._cfs[n][token] 
@@ -327,7 +327,7 @@ class Vocabulary():
         vocab = vocab or self._vocab
         vector = np.zeros((len(vocab),))
         n_tokens = len(tokens)
-        for token in tokens):
+        for token in tokens:
             idx = vocab.get(token)
             if idx is not None: 
                 vector[idx] = TfidfModel()(
